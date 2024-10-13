@@ -1,0 +1,6 @@
+@AnthemAPI_HostAddress = http://localhost:5101
+
+GET {{AnthemAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

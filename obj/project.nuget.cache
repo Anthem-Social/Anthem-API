@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "o+O9J7Zg6wPCMTpNotsyzKu3Q/u0PMs8rsc/v7IYjdvIBAoLOBdkumGsNpEAy4Kl1jOBJQFUb8nZcrxFS8B28A==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\schre\\Projects\\AnthemAPI\\AnthemAPI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\schre\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
+    "C:\\Users\\schre\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
+    "C:\\Users\\schre\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
+    "C:\\Users\\schre\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.4.0\\swashbuckle.aspnetcore.swagger.6.4.0.nupkg.sha512",
+    "C:\\Users\\schre\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.4.0\\swashbuckle.aspnetcore.swaggergen.6.4.0.nupkg.sha512",
+    "C:\\Users\\schre\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\6.4.0\\swashbuckle.aspnetcore.swaggerui.6.4.0.nupkg.sha512"
+  ],
+  "logs": []
+}
