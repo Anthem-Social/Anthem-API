@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AnthemAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cc8e9aa525c5b8abce4863892ae2c0bc7120bb7b")]
 [assembly: System.Reflection.AssemblyProductAttribute("AnthemAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AnthemAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
