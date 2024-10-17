@@ -1,13 +1,16 @@
+using AnthemAPI.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient<SpotifyService>();
+builder.Services.AddHttpClient<TokenService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
