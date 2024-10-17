@@ -1,4 +1,4 @@
-using AnthemAPI.Enums;
+using AnthemAPI.Common;
 
 namespace AnthemAPI.Models;
 
