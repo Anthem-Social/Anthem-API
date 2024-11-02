@@ -1,6 +1,4 @@
 using AnthemAPI.Common;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
@@ -109,20 +107,20 @@ public class TokenService
             { "grant_type", "refresh_token" },
             { "refresh_token", decryptedToken }
         };
-
+        
         var response = await _tokenHttpClient.PostAsync("", new FormUrlEncodedContent(data));
         var result = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)
         {
             var json = System.Text.Json.JsonDocument.Parse(result);
-            if (json.RootElement.TryGetProperty("refresh_token", out var newRefreshToken))
+            if (json.RootElement.TryGetProperty("access_token", out var newAccessToken))
             {
-                var encryptedToken = Encrypt(newRefreshToken.GetString()!);
-                var jsonObject = json.RootElement.GetRawText().Replace(newRefreshToken.GetString()!, encryptedToken);
+                var encryptedToken = Encrypt(newAccessToken.GetString()!);
+                var jsonObject = json.RootElement.GetRawText().Replace(newAccessToken.GetString()!, encryptedToken);
                 return ServiceResult<string>.Success(jsonObject);
             }
-            return ServiceResult<string>.Failure($"No refresh_token property in JSON. {json}", "TokenService.Refresh()");
+            return ServiceResult<string>.Failure($"No refresh_token property in JSON. {json.ToString()}", "TokenService.Refresh()");
         }
 
         return ServiceResult<string>.Failure($"Error response for token refresh: {response}", "TokenService.Refresh()");
