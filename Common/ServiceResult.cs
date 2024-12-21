@@ -18,13 +18,13 @@ public class ServiceResult<T>
 
     public static ServiceResult<T> Success(T data)
     {
-        Console.WriteLine("Success: " + data);
+        // Console.WriteLine("Success: " + data);
         return new ServiceResult<T>(true, data, null, null);
     }
 
     public static ServiceResult<T> Failure(string errorMessage, string errorOrigin)
     {
-        Console.WriteLine("Failure: " + errorMessage);
+        // Console.WriteLine("Failure: " + errorMessage);
         // TODO: log error message and origin here to capture all failed service results
         return new ServiceResult<T>(false, default, errorMessage, errorOrigin);
     }

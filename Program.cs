@@ -1,10 +1,13 @@
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using AnthemAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<AmazonDynamoDBClient>();
+builder.Services.AddScoped<DynamoDBContext>();
 builder.Services.AddHttpClient<SpotifyService>();
-builder.Services.AddHttpClient<TokenService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
