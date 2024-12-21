@@ -6,7 +6,7 @@ using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpContextAccessor();
+// builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton<IAmazonDynamoDB>(sp =>
     {
@@ -19,12 +19,15 @@ builder.Services.AddSingleton<IAmazonDynamoDB>(sp =>
 );
 
 builder.Services.AddScoped<DynamoDBContext>();
+
+builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<JobService>();
 builder.Services.AddScoped<StatusConnectionService>();
+builder.Services.AddScoped<StatusService>();
 builder.Services.AddScoped<UserService>();
 
-builder.Services.AddHttpClient<AuthorizationService>();
 builder.Services.AddHttpClient<SpotifyService>();
+builder.Services.AddHttpClient<TokenService>();
 
 builder.Services.AddQuartz();
 builder.Services.AddQuartzHostedService();
@@ -41,5 +44,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+// app.UseAuthorization();
 app.MapControllers();
 app.Run();

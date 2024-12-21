@@ -2,7 +2,6 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
-using AnthemAPI.Models;
 using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
@@ -29,7 +28,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection?>.Failure($"Failed to load for {userId}.\n{e}", "StatusConnectionService.Load()");
+            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to load for {userId}.", "StatusConnectionService.Load()");
         }
     }
 
@@ -42,7 +41,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection>.Failure($"Failed to save for {statusConnection.UserId}.\n{e}", "StatusConnectionService.Save()");
+            return ServiceResult<StatusConnection>.Failure(e, $"Failed to save for {statusConnection.UserId}.", "StatusConnectionService.Save()");
         }
     }
 
@@ -60,7 +59,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection>.Failure($"Failed to clear for {userId}.\n{e}", "StatusConnectionService.Clear()");
+            return ServiceResult<StatusConnection>.Failure(e, $"Failed to clear for {userId}.", "StatusConnectionService.Clear()");
         }
     }
 
@@ -98,7 +97,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection?>.Failure($"Failed to add connection id {connectionId}.\n{e}", "StatusConnectionService.AddConnectionId()");
+            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to add connection id {connectionId}.", "StatusConnectionService.AddConnectionId()");
         }
     }
 
@@ -136,7 +135,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<int>.Failure($"Failed to remove connection ids for {userId}.\n{e}", "StatusConnectionService.RemoveConnectionIds()");
+            return ServiceResult<int>.Failure(e, $"Failed to remove connection ids for {userId}.", "StatusConnectionService.RemoveConnectionIds()");
         }
     }
 }

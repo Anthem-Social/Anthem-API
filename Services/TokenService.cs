@@ -36,24 +36,24 @@ public class TokenService
 
             if (!response.IsSuccessStatusCode)
             {
-                return ServiceResult<string>.Failure($"Error response for token swap: {response}", "AuthorizationService.Swap()");
+                return ServiceResult<string>.Failure(null, $"Error response: {response}", "TokenService.Swap()");
             }
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
             if (json.TryGetProperty("refresh_token", out var refreshToken))
             {
-                string encrypted = Helpers.Encrypt(refreshToken.GetString()!);
+                string encrypted = Helpers.Encrypt(_configuration["EncryptionKey"]!, refreshToken.GetString()!);
                 string result = json.GetRawText().Replace(refreshToken.GetString()!, encrypted);
 
                 return ServiceResult<string>.Success(result);
             }
 
-            return ServiceResult<string>.Failure($"No refresh_token property in JSON. {json}", "AuthorizationService.Swap()");
+            return ServiceResult<string>.Failure(null, $"No refresh_token property. {json}", "TokenService.Swap()");
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure($"Failed to swap.\nError: {e}", "AuthorizationService.Swap()");
+            return ServiceResult<string>.Failure(e, $"Failed to swap.", "TokenService.Swap()");
         }
     }
 
@@ -61,7 +61,7 @@ public class TokenService
     {
         try
         {
-            string decrypted = Helpers.Decrypt(refreshToken);
+            string decrypted = Helpers.Decrypt(_configuration["EncryptionKey"]!, refreshToken);
             var data = new Dictionary<string, string>
             {
                 { "grant_type", "refresh_token" },
@@ -72,24 +72,24 @@ public class TokenService
 
             if (!response.IsSuccessStatusCode)
             {
-                return ServiceResult<string>.Failure($"Error response for token refresh: {response}", "AuthorizationService.Refresh()");
+                return ServiceResult<string>.Failure(null, $"Error response: {response}", "TokenService.Refresh()");
             }
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
             if (json.TryGetProperty("refresh_token", out var token))
             {
-                string encrypted = Helpers.Encrypt(token.GetString()!);
+                string encrypted = Helpers.Encrypt(_configuration["EncryptionKey"]!, token.GetString()!);
                 string result = json.GetRawText().Replace(token.GetString()!, encrypted);
 
                 return ServiceResult<string>.Success(result);
             }
             
-            return ServiceResult<string>.Failure($"No refresh_token property in JSON. {json}", "AuthorizationService.Refresh()");
+            return ServiceResult<string>.Failure(null, $"No refresh_token property. {json}", "TokenService.Refresh()");
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure($"Failed to refresh token.\n{e}", "AuthorizationService.Refresh()");
+            return ServiceResult<string>.Failure(e, $"Failed to refresh token.", "TokenService.Refresh()");
         }
     }
 }

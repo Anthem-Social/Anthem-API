@@ -23,7 +23,7 @@ public class UserService
         }
         catch (Exception e)
         {
-            return ServiceResult<User?>.Failure($"Failed to load user {id}.\nError: {e}", "UserService.Load()");
+            return ServiceResult<User?>.Failure(e, $"Failed to load for {id}.", "UserService.Load()");
         }
     }
 
@@ -36,37 +36,37 @@ public class UserService
         }
         catch (Exception e)
         {
-            return ServiceResult<User>.Failure($"Failed to save user {user.Id}.\nError: {e}", "UserService.Save()");
+            return ServiceResult<User>.Failure(e, $"Failed to save for {user.Id}.", "UserService.Save()");
         }
     }
 
-    public async Task<ServiceResult<User>> AddFollower(string id, string userId)
+    public async Task<ServiceResult<bool>> AddFollower(string followee, string follower)
     {
         try
         {
-            var user = await _context.LoadAsync<User>(id);
-            user.Followers.Add(userId);
+            var user = await _context.LoadAsync<User>(followee);
+            user.Followers.Add(follower);
             await _context.SaveAsync(user);
-            return ServiceResult<User>.Success(user);
+            return ServiceResult<bool>.Success(true);
         }
         catch (Exception e)
         {
-            return ServiceResult<User>.Failure($"Failed to add follower {userId} to {id}.\nError: {e}", "UserService.AddFollower()");
+            return ServiceResult<bool>.Failure(e, $"Failed to add follower {follower} to {followee}.", "UserService.AddFollower()");
         }
     }
 
-    public async Task<ServiceResult<User>> AddFollowing(string id, string userId)
+    public async Task<ServiceResult<bool>> AddFollowing(string follower, string followee)
     {
         try
         {
-            var user = await _context.LoadAsync<User>(id);
-            user.Following.Add(userId);
+            var user = await _context.LoadAsync<User>(follower);
+            user.Following.Add(followee);
             await _context.SaveAsync(user);
-            return ServiceResult<User>.Success(user);
+            return ServiceResult<bool>.Success(true);
         }
         catch (Exception e)
         {
-            return ServiceResult<User>.Failure($"Failed to add following {userId} to {id}.\nError: {e}", "UserService.AddFollowing()");
+            return ServiceResult<bool>.Failure(e, $"Failed to add following {followee} to {follower}.", "UserService.AddFollowing()");
         }
     }
 }

@@ -8,36 +8,38 @@ namespace AnthemAPI.Controllers;
 [Route("token")]
 public class TokenController
 (
-    AuthorizationService authorizationService
+    AuthorizationService authorizationService,
+    TokenService tokenService
 ) : ControllerBase
 {
     private readonly AuthorizationService _authorizationService = authorizationService;
+    private readonly TokenService _tokenService = tokenService;
 
     [HttpPost("swap")]
     public async Task<IActionResult> Swap([FromForm] string code)
     {
-        var swapResult = await _authorizationService.Swap(code);
-        if (swapResult.Data is null || swapResult.IsFailure) return BadRequest();
+        var swap = await _tokenService.Swap(code);
+        if (swap.Data is null || swap.IsFailure) return StatusCode(500);
 
-        JsonElement json = JsonDocument.Parse(swapResult.Data!).RootElement;
+        JsonElement json = JsonDocument.Parse(swap.Data!).RootElement;
 
-        var saveResult = await _authorizationService.Save(json);
-        if (saveResult.Data is null || saveResult.IsFailure) return BadRequest();
+        var save = await _authorizationService.Save(json);
+        if (save.Data is null || save.IsFailure) return StatusCode(500);
 
-        return Ok(swapResult.Data);
+        return Ok(swap.Data);
     }
 
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromForm] string refreshToken)
     {
-        var refreshResult = await _authorizationService.Refresh(refreshToken);
-        if (refreshResult.Data is null || refreshResult.IsFailure) return BadRequest();
+        var refresh = await _tokenService.Refresh(refreshToken);
+        if (refresh.Data is null || refresh.IsFailure) return StatusCode(500);
 
-        JsonElement json = JsonDocument.Parse(refreshResult.Data!).RootElement;
+        JsonElement json = JsonDocument.Parse(refresh.Data!).RootElement;
 
-        var saveResult = await _authorizationService.Save(json);
-        if (saveResult.Data is null || saveResult.IsFailure) return BadRequest();
+        var save = await _authorizationService.Save(json);
+        if (save.Data is null || save.IsFailure) return StatusCode(500);
 
-        return Ok(refreshResult.Data);
+        return Ok(refresh.Data);
     }
 }

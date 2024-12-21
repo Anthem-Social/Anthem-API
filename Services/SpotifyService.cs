@@ -25,7 +25,7 @@ public class SpotifyService
 
             if (!response.IsSuccessStatusCode)
             {
-                return ServiceResult<string>.Failure($"Error response from fetching me: {response}", "SpotifyService.GetId()");
+                return ServiceResult<string>.Failure(null, $"Error response: {response}", "SpotifyService.GetId()");
             }
 
             string content = await response.Content.ReadAsStringAsync();
@@ -38,7 +38,7 @@ public class SpotifyService
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure($"Failed to get id.\nError: {e}", "SpotifyService.GetId()");
+            return ServiceResult<string>.Failure(e, "Failed to get id.", "SpotifyService.GetId()");
         }
     }
 
@@ -52,7 +52,7 @@ public class SpotifyService
 
             if (!response.IsSuccessStatusCode)
             {
-                return ServiceResult<Status?>.Failure($"Error response from fetching me player: {response}", "SpotifyService.GetStatus()");
+                return ServiceResult<Status?>.Failure(null, $"Error response: {response}", "SpotifyService.GetStatus()");
             }
 
             string content = await response.Content.ReadAsStringAsync();
@@ -95,7 +95,7 @@ public class SpotifyService
         }
         catch (Exception e)
         {
-            return ServiceResult<Status?>.Failure($"Failed to get status.\n{e}", "SpotifyService.GetStatus()");
+            return ServiceResult<Status?>.Failure(e, $"Failed to get status for {userId}.", "SpotifyService.GetStatus()");
         }
     }
 }

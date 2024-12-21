@@ -30,7 +30,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure($"Failed to check if job with key {userId} exists.\n{e}", "JobService.Exists()");
+            return ServiceResult<bool>.Failure(e, $"Failed to check if exists for {userId}.", "JobService.Exists()");
         }
     }
 
@@ -62,7 +62,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure($"Failed to schedule job for user: {userId}.\n{e}", "JobService.Schedule()");
+            return ServiceResult<bool>.Failure(e, $"Failed to schedule for {userId}.", "JobService.Schedule()");
         }
     }
 
@@ -80,7 +80,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure($"Failed to unschedule job for {userId}.\n{e}", "JobService.Unschedule()");
+            return ServiceResult<bool>.Failure(e, $"Failed to unschedule for {userId}.", "JobService.Unschedule()");
         }
     }
 
@@ -94,7 +94,7 @@ public class JobService
 
             if (job is null)
             {
-                return ServiceResult<bool>.Failure($"No job detail for {userId}.", "JobService.Reschedule()");
+                return ServiceResult<bool>.Failure(null, $"No job detail for {userId}.", "JobService.SetPollingTier()");
             }
 
             ITrigger trigger = TriggerBuilder.Create()
@@ -118,7 +118,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure($"Failed to change job interval for {userId}.\n{e}", "JobService.Reschedule()");
+            return ServiceResult<bool>.Failure(e, $"Failed to set polling tier for {userId}.", "JobService.SetPollingTier()");
         }
     }
 }
@@ -130,12 +130,16 @@ public class EmitStatus : IJob
     private readonly JobService _jobService;
     private readonly SpotifyService _spotifyService;
     private readonly StatusConnectionService _statusConnectionService;
+    private readonly StatusService _statusService;
+    private readonly TokenService _tokenService;
 
     public EmitStatus(
         AuthorizationService authorizationService,
         JobService jobService,
         SpotifyService spotifyService,
-        StatusConnectionService statusConnectionService
+        StatusConnectionService statusConnectionService,
+        StatusService statusService,
+        TokenService tokenService
     )
     {
         var config = new AmazonApiGatewayManagementApiConfig
@@ -147,6 +151,8 @@ public class EmitStatus : IJob
         _jobService = jobService;
         _spotifyService = spotifyService;
         _statusConnectionService = statusConnectionService;
+        _statusService = statusService;
+        _tokenService = tokenService;
     }
 
     public async Task Execute(IJobExecutionContext context)
@@ -157,60 +163,59 @@ public class EmitStatus : IJob
         try
         {
             // Get the user's authorization
-            var authResult = await _authorizationService.Load(userId);
+            var auth = await _authorizationService.Load(userId);
 
-            if (authResult.Data is null || authResult.IsFailure)
+            if (auth.Data is null || auth.IsFailure)
             {
-                throw new Exception(authResult.ErrorMessage);
+                throw new Exception(auth.ErrorMessage);
             }
 
-            Authorization authorization = authResult.Data;
+            Authorization authorization = auth.Data;
 
             // Refresh the auth token if it is expired
             if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > authorization.ExpiresAt)
             {
-                var refreshResult = await _authorizationService.Refresh(authorization.RefreshToken);
+                var refresh = await _tokenService.Refresh(authorization.RefreshToken);
 
-                if (refreshResult.Data is null || refreshResult.IsFailure)
+                if (refresh.Data is null || refresh.IsFailure)
                 {
-                    throw new Exception(refreshResult.ErrorMessage);
+                    throw new Exception(refresh.ErrorMessage);
                 }
 
-                JsonElement refreshJson = JsonDocument.Parse(refreshResult.Data!).RootElement;
-                var saveResult = await _authorizationService.Save(refreshJson);
+                JsonElement refreshJson = JsonDocument.Parse(refresh.Data!).RootElement;
+                var save = await _authorizationService.Save(refreshJson);
 
-                if (saveResult.Data is null || saveResult.IsFailure)
+                if (save.Data is null || save.IsFailure)
                 {
-                    throw new Exception(saveResult.ErrorMessage);
+                    throw new Exception(save.ErrorMessage);
                 }
 
-                authorization = saveResult.Data;
+                authorization = save.Data;
             }
 
             // Get the user's status connections
-            var connectionsResult = await _statusConnectionService.Load(userId);
+            var connections = await _statusConnectionService.Load(userId);
 
-            if (connectionsResult.Data is null || connectionsResult.IsFailure)
+            if (connections.Data is null || connections.IsFailure)
             {
-                throw new Exception(connectionsResult.ErrorMessage);
+                throw new Exception(connections.ErrorMessage);
             }
 
-            HashSet<string> connectionIds = connectionsResult.Data.ConnectionIds;
+            HashSet<string> connectionIds = connections.Data.ConnectionIds;
 
             // Get the user's Spotify status
-            var statusResult = await _spotifyService.GetStatus(authorization.AccessToken, userId);
+            var getStatus = await _spotifyService.GetStatus(authorization.AccessToken, userId);
 
-            if (statusResult.IsFailure)
+            if (getStatus.IsFailure)
             {
-                throw new Exception(statusResult.ErrorMessage);
+                throw new Exception(getStatus.ErrorMessage);
             }
 
-            Status? status = statusResult.Data;
+            Status? status = getStatus.Data;
 
-            // If it is empty, don't send it
+            // If we don't have a status, don't emit anything, and ensure we set the PollingTier to Reduced
             if (status is null)
             {
-                // Set the PollingTier to Reduced
                 if (pollingGroup == Active.Group)
                 {
                     await _jobService.SetPollingTier(userId, Reduced);
@@ -219,18 +224,24 @@ public class EmitStatus : IJob
                 return;
             }
 
-            // If we have a status, ensure we are in the Active PollingTier
+            // If we have a status, ensure we set the PollingTier to Active
             if (pollingGroup == Reduced.Group)
             {
                 await _jobService.SetPollingTier(userId, Active);
             }
 
-            Console.WriteLine("Track: " + status.Track);
+            // Save the user's status
+            var saveStatus = await _statusService.Save(status);
+
+            if (saveStatus.Data is null || saveStatus.IsFailure)
+            {
+                throw new Exception(saveStatus.ErrorMessage);
+            }
 
             // Send the user's Spotify status to all connections
-            string statusJson = JsonSerializer.Serialize(status);
-            byte[] bytes = Encoding.UTF8.GetBytes(statusJson);
-            var goneConnectionIds = new List<string>();
+            string json = JsonSerializer.Serialize(status);
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            var gone = new List<string>();
 
             var posts = connectionIds.Select(async connectionId =>
             {
@@ -246,23 +257,23 @@ public class EmitStatus : IJob
                 }
                 catch (GoneException)
                 {
-                    goneConnectionIds.Add(connectionId);
+                    gone.Add(connectionId);
                 }
             });
 
             await Task.WhenAll(posts);
 
-            // Remove all Connections that are gone
-            if (goneConnectionIds.Count > 0)
+            // Remove all connections that are gone
+            if (gone.Count > 0)
             {
-                var removeResult = await _statusConnectionService.RemoveConnectionIds(userId, goneConnectionIds);
+                var remove = await _statusConnectionService.RemoveConnectionIds(userId, gone);
 
-                if (removeResult.IsFailure)
+                if (remove.IsFailure)
                 {
-                    throw new Exception(removeResult.ErrorMessage);
+                    throw new Exception(remove.ErrorMessage);
                 }
                 
-                int count = removeResult.Data;
+                int count = remove.Data;
 
                 // Unschedule the job if there are no more connections
                 if (count == 0)
@@ -273,7 +284,7 @@ public class EmitStatus : IJob
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Job failed.\n{e.Message}");
+            Console.WriteLine($"Emit status job failed.\n{e.Message}");
             await _jobService.Unschedule(userId, pollingGroup);
             await _statusConnectionService.Clear(userId);
         }

@@ -1,4 +1,3 @@
-
 using System.Security.Cryptography;
 using System.Text;
 
@@ -6,20 +5,19 @@ namespace AnthemAPI.Common.Helpers;
 
 public static class Helpers
 {
-    private static byte[] GetKey()
+    private static byte[] ToBytes(string key)
     {
-        string key = Environment.GetEnvironmentVariable("EncryptionKey")!;
         using (var sha256 = SHA256.Create())
         {
             return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
         }
-
     }
-    public static string Encrypt(string text)
+
+    public static string Encrypt(string key, string text)
     {
         using (var aes = Aes.Create())
         {
-            aes.Key = GetKey();
+            aes.Key = ToBytes(key);
             aes.GenerateIV();
 
             using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
@@ -36,13 +34,13 @@ public static class Helpers
         }
     }
 
-    public static string Decrypt(string text)
+    public static string Decrypt(string key, string text)
     {
         byte[] fullCipher = Convert.FromBase64String(text);
 
         using (var aes = Aes.Create())
         {
-            aes.Key = GetKey();
+            aes.Key = ToBytes(key);
             var iv = new byte[aes.BlockSize / 8];
             var cipher = new byte[fullCipher.Length - iv.Length];
 
