@@ -19,7 +19,7 @@ jobs:
       - name: Get version
         id: get-version
         run: |
-          VERSION=$(cat version.txt)
+          VERSION=$(cat version)
           echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ steps.get-version.outputs.version }}

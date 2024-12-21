@@ -19,7 +19,7 @@ jobs:
       - name: Get PR branch version
         id: pr-version
         run: |
-          PR_VERSION=$(cat version.txt)
+          PR_VERSION=$(cat version)
           echo "PR_VERSION=$PR_VERSION" >> $GITHUB_OUTPUT
 
       - name: Checkout master branch
@@ -30,7 +30,7 @@ jobs:
       - name: Get master branch version
         id: master-version
         run: |
-          MASTER_VERSION=$(cat version.txt)
+          MASTER_VERSION=$(cat version)
           echo "MASTER_VERSION=$MASTER_VERSION" >> $GITHUB_OUTPUT
 
       - name: Compare Versions
