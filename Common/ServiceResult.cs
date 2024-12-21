@@ -24,7 +24,8 @@ public class ServiceResult<T>
 
     public static ServiceResult<T> Failure(string errorMessage, string errorOrigin)
     {
-        // Console.WriteLine("Failure: " + errorMessage);
+        Console.WriteLine("Failure: " + errorMessage);
+        Console.WriteLine("Origin: " + errorOrigin);
         // TODO: log error message and origin here to capture all failed service results
         return new ServiceResult<T>(false, default, errorMessage, errorOrigin);
     }

@@ -1,58 +1,101 @@
 using System.Net.Http.Headers;
+using System.Text.Json;
 using AnthemAPI.Common;
+using AnthemAPI.Models;
 
 namespace AnthemAPI.Services;
 
 public class SpotifyService
 {
-    private readonly HttpClient _spotifyHttpClient;
+    private readonly HttpClient _client;
 
-    public SpotifyService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public SpotifyService(HttpClient client)
     {
-        var authHeader = httpContextAccessor.HttpContext.Request.Headers.Authorization.ToString();
-        string accessToken;
+        _client = client;
+        _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
+    }
 
-        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+    public async Task<ServiceResult<string>> GetId(string accessToken)
+    {
+        try
         {
-            accessToken = authHeader.Split(" ")[1].Trim();
-            Console.WriteLine($"Extracted Token: {accessToken}");
-            _spotifyHttpClient = httpClient;
-            _spotifyHttpClient.BaseAddress = new Uri("https://api.spotify.com/v1/");
-            _spotifyHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.GetAsync("me");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ServiceResult<string>.Failure($"Error response from fetching me: {response}", "SpotifyService.GetId()");
+            }
+
+            string content = await response.Content.ReadAsStringAsync();
+
+            JsonElement json = JsonDocument.Parse(content).RootElement;
+
+            string id = json.GetProperty("id").GetString()!;
+
+            return ServiceResult<string>.Success(id);
         }
-        else
+        catch (Exception e)
         {
-            throw new NotImplementedException();
+            return ServiceResult<string>.Failure($"Failed to get id.\nError: {e}", "SpotifyService.GetId()");
         }
     }
 
-    public async Task<ServiceResult<string>> GetMe()
+    public async Task<ServiceResult<Status?>> GetStatus(string accessToken, string userId)
     {
-        var response = await _spotifyHttpClient.GetAsync("me");
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var content = await response.Content.ReadAsStringAsync();
-            return ServiceResult<string>.Success(content);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.GetAsync("me/player");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ServiceResult<Status?>.Failure($"Error response from fetching me player: {response}", "SpotifyService.GetStatus()");
+            }
+
+            string content = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrEmpty(content))
+            {
+                return ServiceResult<Status?>.Success(null);
+            }
+
+            JsonElement json = JsonDocument.Parse(content).RootElement;
+
+            string type = json.GetProperty("currently_playing_type").GetString()!;
+
+            if (type != "track")
+            {
+                return ServiceResult<Status?>.Success(null);
+            }
+
+            JsonElement album = json.GetProperty("item").GetProperty("album");
+
+            JsonElement artists = json.GetProperty("item").GetProperty("artists");
+
+            var status = new Status
+            {
+                UserId = userId,
+                Artists = artists.EnumerateArray()
+                    .Select(artist => new Artist 
+                    { 
+                        Name = artist.GetProperty("name").GetString()!, 
+                        Uri = artist.GetProperty("uri").GetString()! 
+                    }).ToList(),
+                Track = json.GetProperty("item").GetProperty("name").GetString()!,
+                TrackUri = json.GetProperty("item").GetProperty("uri").GetString()!,
+                AlbumCoverUrl = album.GetProperty("images")[1].GetProperty("url").GetString()!,
+                AlbumUri = album.GetProperty("uri").GetString()!,
+                LastChanged = json.GetProperty("timestamp").GetInt64()
+            };
+
+            return ServiceResult<Status?>.Success(status);
         }
-        else
+        catch (Exception e)
         {
-            return ServiceResult<string>.Failure($"Error response from fetching me: {response}", "SpotifyService.GetMe()");
+            return ServiceResult<Status?>.Failure($"Failed to get status.\n{e}", "SpotifyService.GetStatus()");
         }
     }
-
-    public async Task<ServiceResult<string>> GetJake()
-    {
-        var response = await _spotifyHttpClient.GetAsync("users/jacob.day");
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            return ServiceResult<string>.Success(content);
-        }
-        else
-        {
-            return ServiceResult<string>.Failure($"Error response from fetching Jake: {response}", "SpotifyService.GetJake()");
-        }
-    }
-
-
 }

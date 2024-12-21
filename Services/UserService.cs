@@ -9,13 +9,9 @@ public class UserService
 {
     private readonly DynamoDBContext _context;
 
-    public UserService(AmazonDynamoDBClient client)
+    public UserService(IAmazonDynamoDB client)
     {
-        var config = new DynamoDBContextConfig
-        {
-            TableNamePrefix = "Users"
-        };
-        _context = new DynamoDBContext(client, config);
+        _context = new DynamoDBContext(client);
     }
 
     public async Task<ServiceResult<User?>> Load(string id)

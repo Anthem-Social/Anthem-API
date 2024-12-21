@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.ApiGatewayManagementApi" Version="3.7.400.68" />
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.403.8" />
+    <PackageReference Include="Quartz.AspNetCore" Version="3.13.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
