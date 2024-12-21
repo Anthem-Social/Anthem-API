@@ -275,6 +275,7 @@ public class EmitStatus : IJob
         {
             Console.WriteLine($"Job failed.\n{e.Message}");
             await _jobService.Unschedule(userId, pollingGroup);
+            await _statusConnectionService.Clear(userId);
         }
     }
 }

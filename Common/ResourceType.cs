@@ -1,6 +1,6 @@
 namespace AnthemAPI.Common;
 
-public enum SpotifyResource
+public enum ResourceType
 {
     Track,
     Album,
