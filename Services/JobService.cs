@@ -135,6 +135,7 @@ public class EmitStatus : IJob
 
     public EmitStatus(
         AuthorizationService authorizationService,
+        IConfiguration configuration,
         JobService jobService,
         SpotifyService spotifyService,
         StatusConnectionService statusConnectionService,
@@ -144,7 +145,7 @@ public class EmitStatus : IJob
     {
         var config = new AmazonApiGatewayManagementApiConfig
         {
-            ServiceURL = "https://wda44qensj.execute-api.us-east-1.amazonaws.com/development"
+            ServiceURL = configuration["StatusApiGatewayUrl"]
         };
         _client = new AmazonApiGatewayManagementApiClient(config);
         _authorizationService = authorizationService;
