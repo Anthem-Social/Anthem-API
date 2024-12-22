@@ -90,7 +90,7 @@ jobs:
             echo "Pruning all stopped containers..."
             docker container prune -f
             echo "Running the new image..."
-            docker run -d -p 8080:8080 --name anthemapi ${IMAGE_NAME}
+            docker run -d -p 443:8080 --name anthemapi ${IMAGE_NAME}
             echo "Deleting all Docker images not in use..."
             docker image prune -a -f
             exit
@@ -113,7 +113,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git tag -a "$VERSION"
+          git tag -a "$VERSION" -m "Release $VERSION of the Anthem API"
           git push origin "$VERSION"
 
       - name: Create GitHub Release
