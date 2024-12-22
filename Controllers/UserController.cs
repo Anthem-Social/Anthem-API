@@ -27,7 +27,7 @@ public class UserController
 
         if (user.IsFailure) return StatusCode(500);
 
-        return Ok(user);
+        return Ok(user.Data);
     }
 
     [HttpPost("follow")]
