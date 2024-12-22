@@ -240,7 +240,11 @@ public class EmitStatus : IJob
             }
 
             // Send the user's Spotify status to all connections
-            string json = JsonSerializer.Serialize(status);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            string json = JsonSerializer.Serialize(status, options);
             byte[] bytes = Encoding.UTF8.GetBytes(json);
             var gone = new List<string>();
 
