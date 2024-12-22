@@ -2,6 +2,7 @@ name: Deploy
 
 permissions:
   contents: write
+  packages: write
 
 on:
   push:
@@ -39,7 +40,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.CHEFSTER_DOCKER_PUSH_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata for Docker
         id: meta
@@ -69,28 +70,28 @@ jobs:
     steps:
       - name: Update the ec2 instance
         env:
-          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-          HOST_NAME: ${{ secrets.EC2_HOST_NAME }}
-          USER_NAME: ${{ secrets.EC2_USER_NAME }}
-          CHEFSTER_PAT: ${{ secrets.CHEFSTER_PAT }}
-          IMAGE_NAME: "ghcr.io/chefster-ai/chefster:${{ needs.build-and-push-image.outputs.version }}"
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+          ANTHEM_PAT: ${{ secrets.ANTHEM_PAT }}
+          IMAGE_NAME: "ghcr.io/anthem-org/anthemapi:${{ needs.build-and-push-image.outputs.version }}"
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           echo "Updating to image name: ${IMAGE_NAME}"
 
-          ssh -v -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} << EOF
+          ssh -v -o StrictHostKeyChecking=no -i private_key ${USER}@${HOST} << EOF
             echo "Logging into GHCR..."
-            echo $CHEFSTER_PAT | docker login ghcr.io -u chefster-ai --password-stdin
+            echo $ANTHEM_PAT | docker login ghcr.io -u anthem-org --password-stdin
             echo "Pulling Docker image..."
-            sudo docker pull ${IMAGE_NAME}
-            echo "Stopping the chefster container..."
-            sudo docker stop chefster
+            docker pull ${IMAGE_NAME}
+            echo "Stopping the Anthem API container..."
+            docker stop anthemapi
             echo "Pruning all stopped containers..."
-            sudo docker container prune -f
+            docker container prune -f
             echo "Running the new image..."
-            sudo docker run -d -p 80:8080 --name chefster ${IMAGE_NAME}
+            docker run -d -p 80:8080 --name anthemapi ${IMAGE_NAME}
             echo "Deleting all Docker images not in use..."
-            sudo docker image prune -a -f
+            docker image prune -a -f
             exit
           EOF
       - name: Cleanup
