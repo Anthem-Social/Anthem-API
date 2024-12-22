@@ -75,14 +75,14 @@ jobs:
           HOST: ${{ secrets.HOST }}
           USER: ${{ secrets.USER }}
           ANTHEM_PAT: ${{ secrets.ANTHEM_PAT }}
-          IMAGE_NAME: "ghcr.io/anthem-org/anthemapi:${{ needs.build-and-push-image.outputs.version }}"
+          IMAGE_NAME: "ghcr.io/anthem-social/anthemapi:${{ needs.build-and-push-image.outputs.version }}"
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           echo "Updating to image name: ${IMAGE_NAME}"
 
           ssh -v -o StrictHostKeyChecking=no -i private_key ${USER}@${HOST} << EOF
             echo "Logging into GHCR..."
-            echo $ANTHEM_PAT | docker login ghcr.io -u anthem-org --password-stdin
+            echo $ANTHEM_PAT | docker login ghcr.io -u anthem-social --password-stdin
             echo "Pulling Docker image..."
             docker pull ${IMAGE_NAME}
             echo "Stopping the Anthem API container..."
@@ -113,7 +113,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git tag -a "$VERSION" -m "Release $VERSION"
+          git tag -a "$VERSION"
           git push origin "$VERSION"
 
       - name: Create GitHub Release
