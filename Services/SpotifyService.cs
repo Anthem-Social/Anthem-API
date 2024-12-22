@@ -64,6 +64,7 @@ public class SpotifyService
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
+            // Ensure they are listening to a Track
             string type = json.GetProperty("currently_playing_type").GetString()!;
 
             if (type != "track")
@@ -71,23 +72,40 @@ public class SpotifyService
                 return ServiceResult<Status?>.Success(null);
             }
 
-            JsonElement album = json.GetProperty("item").GetProperty("album");
+            // Create Album
+            JsonElement albumJson = json.GetProperty("item").GetProperty("album"); 
 
-            JsonElement artists = json.GetProperty("item").GetProperty("artists");
+            var album = new Album
+            {
+                Uri = albumJson.GetProperty("uri").GetString()!,
+                CoverUrl = albumJson.GetProperty("images")[1].GetProperty("url").GetString()!
+            };
 
+            // Create list of Artists
+            JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
+
+            var artists = artistsJson
+                .EnumerateArray()
+                .Select(artist => new Artist 
+                { 
+                    Uri = artist.GetProperty("uri").GetString()!,
+                    Name = artist.GetProperty("name").GetString()!
+                }).ToList();
+
+            // Create Track
+            var track = new Track
+            {
+                Uri = json.GetProperty("item").GetProperty("uri").GetString()!,
+                Name = json.GetProperty("item").GetProperty("name").GetString()!,
+                Artists = artists,
+                Album = album
+            };
+
+            // Create Status
             var status = new Status
             {
                 UserId = userId,
-                Artists = artists.EnumerateArray()
-                    .Select(artist => new Artist 
-                    { 
-                        Name = artist.GetProperty("name").GetString()!, 
-                        Uri = artist.GetProperty("uri").GetString()! 
-                    }).ToList(),
-                Track = json.GetProperty("item").GetProperty("name").GetString()!,
-                TrackUri = json.GetProperty("item").GetProperty("uri").GetString()!,
-                AlbumCoverUrl = album.GetProperty("images")[1].GetProperty("url").GetString()!,
-                AlbumUri = album.GetProperty("uri").GetString()!,
+                Track = track,
                 LastChanged = json.GetProperty("timestamp").GetInt64()
             };
 
