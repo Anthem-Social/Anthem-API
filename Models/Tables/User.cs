@@ -7,6 +7,10 @@ public class User
 {
     [DynamoDBHashKey]
     public required string Id { get; set; }
+    public string? Alias { get; set; }
+    public string? ProfilePictureUrl { get; set; }
+    public string? Bio { get; set ; }
+    public Track? Anthem { get; set; }
     public required HashSet<string> Followers { get; set; }
     public required HashSet<string> Following { get; set; }
     public required HashSet<string> Friends { get; set; }
