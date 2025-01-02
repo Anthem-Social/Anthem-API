@@ -75,7 +75,8 @@ jobs:
           HOST: ${{ secrets.HOST }}
           USER: ${{ secrets.USER }}
           ANTHEM_PAT: ${{ secrets.ANTHEM_PAT }}
-          IMAGE_NAME: "ghcr.io/anthem-social/anthemapi:${{ needs.build-and-push-image.outputs.version }}"
+          VERSION: ${{ needs.build-and-push-image.outputs.version }}
+          IMAGE_NAME: ghcr.io/anthem-social/anthemapi:${VERSION}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           echo "Updating to image name: ${IMAGE_NAME}"
@@ -90,7 +91,7 @@ jobs:
             echo "Pruning all stopped containers..."
             docker container prune -f
             echo "Running the new image..."
-            docker run -d -p 80:8080 --name anthemapi ${IMAGE_NAME}
+            docker run -d -p 80:8080 -e VERSION=${VERSION} --name anthemapi ${IMAGE_NAME}
             echo "Deleting all Docker images not in use..."
             docker image prune -a -f
             exit
