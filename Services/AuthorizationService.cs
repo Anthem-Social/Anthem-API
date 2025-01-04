@@ -12,12 +12,12 @@ public class AuthorizationService
     private readonly SpotifyService _spotifyService;
 
     public AuthorizationService(
-        IAmazonDynamoDB dbClient,
+        IAmazonDynamoDB db,
         SpotifyService spotifyService
     )
     {
         _spotifyService = spotifyService;
-        _context = new DynamoDBContext(dbClient);
+        _context = new DynamoDBContext(db);
     }
 
     public async Task<ServiceResult<Authorization?>> Load(string userId)
