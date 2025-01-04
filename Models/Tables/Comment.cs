@@ -15,5 +15,5 @@ public class Comment
     [DynamoDBGlobalSecondaryIndexHashKey]
     public string UserIdIndex => UserId;
     [DynamoDBGlobalSecondaryIndexRangeKey]
-    public DateTime TimestampIndex => Timestamp;
+    public string TimestampIndex => Timestamp.ToString("O");
 }
