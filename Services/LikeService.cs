@@ -50,7 +50,7 @@ public class LikeService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {like.UserId} for {like.PostId}.", "LikeService.Save()");
+            return ServiceResult<bool>.Failure(e, $"Failed to delete {like.UserId} for {like.PostId}.", "LikeService.Delete()");
         }
     }
 }
