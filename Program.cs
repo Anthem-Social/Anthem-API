@@ -22,6 +22,7 @@ builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<JobService>();
 builder.Services.AddScoped<StatusConnectionService>();
 builder.Services.AddScoped<StatusService>();
+builder.Services.AddScoped<UserChatService>();
 builder.Services.AddScoped<UserService>();
 
 builder.Services.AddHttpClient<SpotifyService>();
