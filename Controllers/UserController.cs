@@ -18,29 +18,28 @@ public class UserController
     {
         var user = await _userService.Load(id);
 
-        if (user.Data is null)
-        {
-            return NotFound(new {
-                error = $"User '{id}' not found."
-            });
-        }
+        if (user.IsFailure)
+            return StatusCode(500);
 
-        if (user.IsFailure) return StatusCode(500);
+        if (user.Data is null)
+            return NotFound();
 
         return Ok(user.Data);
     }
 
-    [HttpPost("follow")]
+    [HttpPut("follow")]
     public async Task<IActionResult> Follow([FromBody] Follow follow)
     {
-        var follower = await _userService.AddFollower(follow.Followee, follow.Follower);
+        var followee = await _userService.AddFollower(follow.Followee, follow.Follower);
 
-        if (follower.IsFailure) return StatusCode(500);
+        if (followee.IsFailure)
+            return StatusCode(500);
 
-        var following = await _userService.AddFollowing(follow.Follower, follow.Followee);
+        var follower = await _userService.AddFollowing(follow.Follower, follow.Followee);
 
-        if (following.IsFailure) return StatusCode(500);
+        if (follower.IsFailure)
+            return StatusCode(500);
 
-        return NoContent();
+        return Ok(followee.Data);
     }
 }
