@@ -58,7 +58,7 @@ public static class Helpers
         }
     }
 
-    public static string? CalculatePaginationToken(int page, int pageSize = DYNAMO_DB_BATCH_SIZE)
+    public static string? CalculatePaginationToken(int page, int pageSize)
     {
         if (page <= 1) return null;
         var skip = (page - 1) * pageSize;
