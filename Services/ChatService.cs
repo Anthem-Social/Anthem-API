@@ -64,7 +64,7 @@ public class ChatService
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Chat>>.Failure(e, $"Failed to get batch.", "ChatService.GetBatch()");
+            return ServiceResult<List<Chat>>.Failure(e, "Failed to get batch.", "ChatService.GetBatch()");
         }
     }
 }

@@ -58,7 +58,7 @@ public class AuthorizationService
 
             if (result.Data is null || result.IsFailure)
             {
-                return ServiceResult<Authorization>.Failure(null, $"Failed to get id.", "AuthorizationService.Save(json)");
+                return ServiceResult<Authorization>.Failure(null, "Failed to get id.", "AuthorizationService.Save(json)");
             }
 
             string id = result.Data!;
@@ -74,7 +74,7 @@ public class AuthorizationService
         }
         catch (Exception e)
         {
-            return ServiceResult<Authorization>.Failure(e, $"Failed to save.", "AuthorizationService.Save(json)");
+            return ServiceResult<Authorization>.Failure(e, "Failed to save.", "AuthorizationService.Save(json)");
         }
     }
 }

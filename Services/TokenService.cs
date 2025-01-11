@@ -53,7 +53,7 @@ public class TokenService
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, $"Failed to swap.", "TokenService.Swap()");
+            return ServiceResult<string>.Failure(e, "Failed to swap.", "TokenService.Swap()");
         }
     }
 
@@ -89,7 +89,7 @@ public class TokenService
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, $"Failed to refresh token.", "TokenService.Refresh()");
+            return ServiceResult<string>.Failure(e, "Failed to refresh token.", "TokenService.Refresh()");
         }
     }
 }
