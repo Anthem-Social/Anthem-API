@@ -27,7 +27,7 @@ public class ChatController
     [HttpGet("{userId}/page/{page}")]
     public async Task<IActionResult> GetCards(string userId, int page)
     {
-        var userChatsResult = await _userChatService.GetBatch(userId, page);
+        var userChatsResult = await _userChatService.LoadBatch(userId, page);
         if (userChatsResult.IsFailure)
             return StatusCode(500);
 
@@ -109,25 +109,36 @@ public class ChatController
     [HttpDelete("{id}/member/{userId}")]
     public async Task<IActionResult> RemoveMember(string id, string userId)
     {
-        var load = await _chatService.Load(id);
+        var userChatLoad = await _userChatService.Load(userId, id);
 
-        if (load.IsFailure)
+        if (userChatLoad.IsFailure)
             return StatusCode(500);
 
-        if (load.Data is null)
-            return NotFound();
+        if (userChatLoad.Data is null)
+            return NotFound($"No UserChat for userId: {userId}, chatId: {id}");
+
+        var userChatDelete = await _userChatService.Delete(userChatLoad.Data);
+
+        if (userChatDelete.IsFailure)
+            return StatusCode(500);
+
+        var chatLoad = await _chatService.Load(id);
+
+        if (chatLoad.IsFailure)
+            return StatusCode(500);
+
+        if (chatLoad.Data is null)
+            return NotFound($"No Chat for chatId: {id}");
         
-        Chat chat = load.Data;
+        Chat chat = chatLoad.Data;
         chat.UserIds.Remove(userId);
+
+        if (chat.UserIds.Count == 0)
+            return await Delete(id);
 
         var save = await _chatService.Save(chat);
 
         if (save.IsFailure)
-            return StatusCode(500);
-        
-        var delete = await _userChatService.Delete(userId, id);
-
-        if (delete.IsFailure)
             return StatusCode(500);
         
         return NoContent();
