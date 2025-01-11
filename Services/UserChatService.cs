@@ -4,7 +4,6 @@ using Amazon.DynamoDBv2.DocumentModel;
 using AnthemAPI.Common;
 using AnthemAPI.Common.Helpers;
 using AnthemAPI.Models;
-using Microsoft.AspNetCore.Components.Web;
 using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
@@ -17,21 +16,8 @@ public class UserChatService
     {
         _context = new DynamoDBContext(db);
     }
-    
-    public async Task<ServiceResult<UserChat>> Save(UserChat userChat)
-    {
-        try
-        {
-            await _context.SaveAsync(userChat);
-            return ServiceResult<UserChat>.Success(userChat);
-        }
-        catch (Exception e)
-        {
-            return ServiceResult<UserChat>.Failure(e, $"Failed to save.", "UserChatService.Save()");
-        }
-    }
 
-    public async Task<ServiceResult<bool>> Delete(string userId, string chatId)
+    public async Task<ServiceResult<UserChat?>> Load(string userId, string chatId)
     {
         try
         {
@@ -52,23 +38,51 @@ public class UserChatService
 
             List<UserChat> userChats = await search.GetRemainingAsync();
 
-            var deletions = userChats.Select(async x => await _context.DeleteAsync(x));
+            if (userChats.Count > 1)
+            {
+                return ServiceResult<UserChat?>.Failure(null, $"More than one found for {userId} and {chatId}.", "UserChatService.Load()");
+            }
 
-            await Task.WhenAll(deletions);
-
-            return ServiceResult<bool>.Success(true);
+            return ServiceResult<UserChat?>.Success(userChats.FirstOrDefault(defaultValue: null));
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {chatId} for {userId}.", "UserChatService.Delete()");
+            return ServiceResult<UserChat?>.Failure(e, "Failed to load.", "UserChatService.Load()");
         }
     }
 
-    public async Task<ServiceResult<List<UserChat>>> GetBatch(string userId, int page)
+    
+    public async Task<ServiceResult<UserChat>> Save(UserChat userChat)
     {
         try
         {
-            var config = new QueryOperationConfig
+            await _context.SaveAsync(userChat);
+            return ServiceResult<UserChat>.Success(userChat);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<UserChat>.Failure(e, "Failed to save.", "UserChatService.Save()");
+        }
+    }
+
+    public async Task<ServiceResult<UserChat>> Delete(UserChat userChat)
+    {
+        try
+        {
+            await _context.DeleteAsync(userChat);
+            return ServiceResult<UserChat>.Success(userChat);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<UserChat>.Failure(e, $"Failed to delete {userChat.ChatId} for {userChat.UserId}.", "UserChatService.Delete()");
+        }
+    }
+
+    public async Task<ServiceResult<List<UserChat>>> LoadBatch(string userId, int page)
+    {
+        try
+        {
+            var query = new QueryOperationConfig
             {
                 KeyExpression = new Expression
                 {
@@ -79,21 +93,19 @@ public class UserChatService
                     }
                 },
                 BackwardSearch = true,
-                Limit = DYNAMO_DB_BATCH_SIZE,
-                PaginationToken = page > 1 ? Helpers.CalculatePaginationToken(page) : null
+                Limit = USER_CHAT_BATCH_LIMIT,
+                PaginationToken = page > 1 ? Helpers.CalculatePaginationToken(page, USER_CHAT_BATCH_LIMIT) : null
             };
 
-            var search = _context.FromQueryAsync<UserChat>(config);
-            var userChats = new List<UserChat>();
-            
-            var results = await search.GetRemainingAsync();
-            userChats.AddRange(results);
+            var search = _context.FromQueryAsync<UserChat>(query);
+
+            List<UserChat> userChats = await search.GetRemainingAsync();
 
             return ServiceResult<List<UserChat>>.Success(userChats);
         }
         catch (Exception e)
         {
-            return ServiceResult<List<UserChat>>.Failure(e, $"Failed to get batch.", "UserChatService.GetBatch()");
+            return ServiceResult<List<UserChat>>.Failure(e, "Failed to load batch.", "UserChatService.LoadBatch()");
         }
     }
 }
