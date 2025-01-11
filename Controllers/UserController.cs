@@ -41,6 +41,6 @@ public class UserController
 
         if (following.IsFailure) return StatusCode(500);
 
-        return Ok();
+        return NoContent();
     }
 }
