@@ -90,7 +90,8 @@ public class SpotifyService
                 { 
                     Uri = artist.GetProperty("uri").GetString()!,
                     Name = artist.GetProperty("name").GetString()!
-                }).ToList();
+                })
+                .ToList();
 
             // Create Track
             var track = new Track
