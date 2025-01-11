@@ -18,6 +18,7 @@ builder.Services.AddScoped<DynamoDBContext>();
 // builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<AuthorizationService>();
+builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<JobService>();
 builder.Services.AddScoped<StatusConnectionService>();
 builder.Services.AddScoped<StatusService>();
