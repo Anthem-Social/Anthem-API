@@ -69,9 +69,9 @@ public class StatusConnectionService
         {
             var batches = new List<Task<BatchExecuteStatementResponse>>();
 
-            for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_SIZE)
+            for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_LIMIT)
             {
-                var ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_SIZE).ToList();
+                var ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_LIMIT).ToList();
 
                 var batch = new BatchExecuteStatementRequest
                 {
