@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Common.Helpers;
 
@@ -55,5 +56,12 @@ public static class Helpers
                 return sr.ReadToEnd();
             }
         }
+    }
+
+    public static string? CalculatePaginationToken(int page, int pageSize = DYNAMO_DB_BATCH_SIZE)
+    {
+        if (page <= 1) return null;
+        var skip = (page - 1) * pageSize;
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(skip.ToString()));
     }
 }
