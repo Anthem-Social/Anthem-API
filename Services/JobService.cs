@@ -167,9 +167,7 @@ public class EmitStatus : IJob
             var auth = await _authorizationService.Load(userId);
 
             if (auth.Data is null || auth.IsFailure)
-            {
                 throw new Exception(auth.ErrorMessage);
-            }
 
             Authorization authorization = auth.Data;
 
@@ -179,17 +177,13 @@ public class EmitStatus : IJob
                 var refresh = await _tokenService.Refresh(authorization.RefreshToken);
 
                 if (refresh.Data is null || refresh.IsFailure)
-                {
                     throw new Exception(refresh.ErrorMessage);
-                }
 
                 JsonElement refreshJson = JsonDocument.Parse(refresh.Data!).RootElement;
                 var save = await _authorizationService.Save(refreshJson);
 
                 if (save.Data is null || save.IsFailure)
-                {
                     throw new Exception(save.ErrorMessage);
-                }
 
                 authorization = save.Data;
             }
@@ -198,9 +192,7 @@ public class EmitStatus : IJob
             var connections = await _statusConnectionService.Load(userId);
 
             if (connections.Data is null || connections.IsFailure)
-            {
                 throw new Exception(connections.ErrorMessage);
-            }
 
             HashSet<string> connectionIds = connections.Data.ConnectionIds;
 
@@ -208,9 +200,7 @@ public class EmitStatus : IJob
             var getStatus = await _spotifyService.GetStatus(authorization.AccessToken, userId);
 
             if (getStatus.IsFailure)
-            {
                 throw new Exception(getStatus.ErrorMessage);
-            }
 
             Status? status = getStatus.Data;
 
@@ -235,9 +225,7 @@ public class EmitStatus : IJob
             var saveStatus = await _statusService.Save(status);
 
             if (saveStatus.Data is null || saveStatus.IsFailure)
-            {
                 throw new Exception(saveStatus.ErrorMessage);
-            }
 
             // Send the user's Spotify status to all connections
             var options = new JsonSerializerOptions
@@ -274,9 +262,7 @@ public class EmitStatus : IJob
                 var remove = await _statusConnectionService.RemoveConnectionIds(userId, gone);
 
                 if (remove.IsFailure)
-                {
                     throw new Exception(remove.ErrorMessage);
-                }
                 
                 int count = remove.Data;
 
