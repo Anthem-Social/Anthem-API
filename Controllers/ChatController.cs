@@ -13,7 +13,7 @@ public class ChatController
     private readonly ChatService _chatService = chatService;
     private readonly UserChatService _userChatService = userChatService;
 
-    [HttpGet]
+    [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id)
     {
         var result = await _chatService.Load(id);

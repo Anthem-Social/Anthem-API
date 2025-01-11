@@ -18,7 +18,7 @@ public class ChatService
     {
         try
         {
-            var chat = await _context.LoadAsync<Chat>(id);
+            var chat = await _context.LoadAsync<Chat?>(id);
             return ServiceResult<Chat?>.Success(chat);
         }
         catch (Exception e)
