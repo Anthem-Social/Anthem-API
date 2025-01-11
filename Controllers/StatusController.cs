@@ -25,20 +25,23 @@ public class StatusController
         Console.WriteLine("UserId: " + connection.UserId);
 
         // Get all of the user's friends' ids
-        var friends = await _userService.Load(connection.UserId);
-        if (friends.Data is null || friends.IsFailure) return;
+        var friends = await _userService.Load(connection.UserId);            
+        if (friends.Data is null || friends.IsFailure)
+            return;
 
         List<string> friendIds = friends.Data.Friends.ToList();
 
         // Add the user's connection id to each friends' status connection list
         var add = await _statusConnectionService.AddConnectionId(friendIds, connection.Id);
-        if (add.IsFailure) return;
+        if (add.IsFailure)
+            return;
 
         // Schedule each job if not already scheduled
         foreach (var id in friendIds)
         {
             var exists = await _jobService.Exists(id);
-            if (exists.IsFailure) continue;
+            if (exists.IsFailure)
+                continue;
 
             if (!exists.Data)
             {
@@ -52,14 +55,11 @@ public class StatusController
     {
         var status = await _statusService.Load(userId);
 
-        if (status.Data is null)
-        {
-            return NotFound(new {
-                error = $"Status for '{userId}' not found."
-            });
-        }
+        if (status.IsFailure)
+            return StatusCode(500);
 
-        if (status.IsFailure) return StatusCode(500);
+        if (status.Data is null)
+            return NotFound();
 
         return Ok(status.Data);
     }
