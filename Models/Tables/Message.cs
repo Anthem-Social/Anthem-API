@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2.DataModel;
+using AnthemAPI.Common;
 
 namespace AnthemAPI.Models;
 
@@ -11,5 +12,6 @@ public class Message
     public string Id => $"{SentAt}#{UserId}";
     public required string UserId { get; set; }
     public required DateTime SentAt { get; set; }
-    public required string Text { get; set; }
+    public required ContentType ContentType { get; set; }
+    public required string Content { get; set; }
 }
