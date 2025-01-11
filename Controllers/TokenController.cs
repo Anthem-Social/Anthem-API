@@ -19,12 +19,14 @@ public class TokenController
     public async Task<IActionResult> Swap([FromForm] string code)
     {
         var swap = await _tokenService.Swap(code);
-        if (swap.Data is null || swap.IsFailure) return StatusCode(500);
+        if (swap.Data is null || swap.IsFailure)
+            return StatusCode(500);
 
         JsonElement json = JsonDocument.Parse(swap.Data!).RootElement;
 
         var save = await _authorizationService.Save(json);
-        if (save.Data is null || save.IsFailure) return StatusCode(500);
+        if (save.Data is null || save.IsFailure)
+            return StatusCode(500);
 
         return Ok(swap.Data);
     }
@@ -33,12 +35,14 @@ public class TokenController
     public async Task<IActionResult> Refresh([FromForm] string refreshToken)
     {
         var refresh = await _tokenService.Refresh(refreshToken);
-        if (refresh.Data is null || refresh.IsFailure) return StatusCode(500);
+        if (refresh.Data is null || refresh.IsFailure)
+            return StatusCode(500);
 
         JsonElement json = JsonDocument.Parse(refresh.Data!).RootElement;
 
         var save = await _authorizationService.Save(json);
-        if (save.Data is null || save.IsFailure) return StatusCode(500);
+        if (save.Data is null || save.IsFailure)
+            return StatusCode(500);
 
         return Ok(refresh.Data);
     }
