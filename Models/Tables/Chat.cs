@@ -10,5 +10,5 @@ public class Chat
     public required string Name { get; set; }
     public required HashSet<string> UserIds { get; set; }
     public required string CreatorUserId { get; set; }
-    public DateTime CreatedAt => DateTime.Now;
+    public required DateTime CreatedAt { get; set; }
 }
