@@ -40,33 +40,33 @@ public class UserService
         }
     }
 
-    public async Task<ServiceResult<bool>> AddFollower(string followee, string follower)
+    public async Task<ServiceResult<User>> AddFollower(string followee, string follower)
     {
         try
         {
             var user = await _context.LoadAsync<User>(followee);
             user.Followers.Add(follower);
             await _context.SaveAsync(user);
-            return ServiceResult<bool>.Success(true);
+            return ServiceResult<User>.Success(user);
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to add follower {follower} to {followee}.", "UserService.AddFollower()");
+            return ServiceResult<User>.Failure(e, $"Failed to add follower {follower} to {followee}.", "UserService.AddFollower()");
         }
     }
 
-    public async Task<ServiceResult<bool>> AddFollowing(string follower, string followee)
+    public async Task<ServiceResult<User>> AddFollowing(string follower, string followee)
     {
         try
         {
             var user = await _context.LoadAsync<User>(follower);
             user.Following.Add(followee);
             await _context.SaveAsync(user);
-            return ServiceResult<bool>.Success(true);
+            return ServiceResult<User>.Success(user);
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to add following {followee} to {follower}.", "UserService.AddFollowing()");
+            return ServiceResult<User>.Failure(e, $"Failed to add following {followee} to {follower}.", "UserService.AddFollowing()");
         }
     }
 }
