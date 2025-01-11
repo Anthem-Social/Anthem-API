@@ -39,4 +39,32 @@ public class ChatService
             return ServiceResult<Chat>.Failure(e, $"Failed to save for {chat.Id}.", "ChatService.Save()");
         }
     }
+
+    public async Task<ServiceResult<bool>> Delete(string id)
+    {
+        try
+        {
+            await _context.DeleteAsync(id);
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, $"Failed to delete {id}.", "ChatService.Delete()");
+        }
+    }
+
+    public async Task<ServiceResult<List<Chat>?>> GetBatch(List<string> ids)
+    {
+        try
+        {
+            BatchGet<Chat> batch = _context.CreateBatchGet<Chat>();
+            ids.ForEach(batch.AddKey);
+            await batch.ExecuteAsync();
+            return ServiceResult<List<Chat>?>.Success(batch.Results);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Chat>?>.Failure(e, $"Failed to get batch.", "ChatService.GetBatch()");
+        }
+    }
 }
