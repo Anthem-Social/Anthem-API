@@ -190,11 +190,24 @@ public class ChatsController
             CreatedAt = DateTime.UtcNow
         };
 
-        var result = await _chatService.Save(chat);
+        var chatSave = await _chatService.Save(chat);
 
-        if (result.IsFailure)
+        if (chatSave.IsFailure)
             return StatusCode(500);
+        
+        var userChat = new UserChat
+        {
+            UserId = dto.CreatorUserId,
+            ChatId = chat.Id,
+            LastMessageAt = DateTime.UtcNow,
+            Preview = ""
+        };
 
+        var userChatSave = _userChatService.Save(userChat);
+
+        if (chatSave.IsFailure)
+            return StatusCode(500);
+        
         return CreatedAtAction(nameof(Get), new { id = chat.Id }, chat);
     }
 
