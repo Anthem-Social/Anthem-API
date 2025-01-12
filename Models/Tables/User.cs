@@ -12,7 +12,5 @@ public class User
     public string? PictureUrl { get; set; }
     public string? Bio { get; set ; }
     public Track? Anthem { get; set; }
-    public required HashSet<string> Followers { get; set; }
-    public required HashSet<string> Following { get; set; }
-    public required HashSet<string> Friends { get; set; }
+    public required HashSet<string> ChatIds {get; set; }
 }
