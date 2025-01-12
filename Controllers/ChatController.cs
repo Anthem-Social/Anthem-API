@@ -24,8 +24,8 @@ public class ChatController
         return Ok(result.Data);
     }
 
-    [HttpGet("{userId}/page/{page}")]
-    public async Task<IActionResult> GetCards(string userId, int page)
+    [HttpGet("cards/{userId}")]
+    public async Task<IActionResult> GetCards(string userId, [FromQuery] int page = 0)
     {
         var userChatsResult = await _userChatService.LoadBatch(userId, page);
         if (userChatsResult.IsFailure)
@@ -68,7 +68,19 @@ public class ChatController
         return Ok(cards);
     }
 
-    [HttpPut("{id}/member/{userId}")]
+    [HttpGet("{id}/messages")]
+    public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 0)
+    {
+        return Ok();
+    }
+
+    [HttpPost("{id}/messages")]
+    public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
+    {
+        return Ok();
+    }
+
+    [HttpPost("{id}/member/{userId}")]
     public async Task<IActionResult> AddMember(string id, string userId)
     {
         var chatLoad = await _chatService.Load(id);
@@ -145,14 +157,14 @@ public class ChatController
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ChatCreate create)
+    public async Task<IActionResult> Create([FromBody] ChatCreate dto)
     {
         var chat = new Chat
         {
             Id = Guid.NewGuid().ToString(),
-            Name = create.Name,
-            UserIds = create.UserIds,
-            CreatorUserId = create.CreatorUserId,
+            Name = dto.Name,
+            UserIds = dto.UserIds,
+            CreatorUserId = dto.CreatorUserId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -164,18 +176,30 @@ public class ChatController
         return CreatedAtAction(nameof(Get), new { id = chat.Id }, chat);
     }
 
-    [HttpPut]
-    public async Task<IActionResult> Update([FromBody] Chat chat)
+    [HttpPatch("{id}/name")]
+    public async Task<IActionResult> Rename(string id, string name)
     {
-        var result = await _chatService.Save(chat);
+        var load = await _chatService.Load(id);
 
-        if (result.IsFailure)
+        if (load.IsFailure)
+            return StatusCode(500);
+        
+        if (load.Data is null)
+            return NotFound();
+        
+        Chat chat = load.Data;
+
+        chat.Name = name;
+
+        var save = await _chatService.Save(chat);
+
+        if (save.IsFailure)
             return StatusCode(500);
 
         return Ok(chat);
     }
 
-    [HttpDelete]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
         var result = await _chatService.Delete(id);
