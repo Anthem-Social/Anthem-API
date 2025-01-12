@@ -7,21 +7,23 @@ using AnthemAPI.Models;
 public class ChatsController
 (
     ChatService chatService,
-    MessageService messageService
+    MessageService messageService,
+    UserService userService
 ) : ControllerBase
 {
     private readonly ChatService _chatService = chatService;
     private readonly MessageService _messageService = messageService;
+    private readonly UserService _userService = userService;
 
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id)
     {
-        var result = await _chatService.Load(id);
+        var load = await _chatService.Load(id);
 
-        if (result.IsFailure)
+        if (load.IsFailure)
             return StatusCode(500);
         
-        return Ok(result.Data);
+        return Ok(load.Data);
     }
 
     [HttpGet("cards/{userId}")]
@@ -64,24 +66,47 @@ public class ChatsController
     [HttpPost("{id}/members/{userId}")]
     public async Task<IActionResult> AddMember(string id, string userId)
     {
-        var chatLoad = await _chatService.Load(id);
+        // Load the Chat
+        var loadChat = await _chatService.Load(id);
 
-        if (chatLoad.IsFailure)
+        if (loadChat.IsFailure)
             return StatusCode(500);
 
-        if (chatLoad.Data is null)
-            return NotFound();
-        
-        Chat chat = chatLoad.Data;
-        bool added = chat.UserIds.Add(userId);
-        
-        if (!added)
-            return Ok(chat);
+        if (loadChat.Data is null)
+            return NotFound($"No Chat with Id: {id}");
 
-        var chatSave = await _chatService.Save(chat);
+        // Load the User
+        var loadUser = await _userService.Load(userId);
 
-        if (chatSave.IsFailure)
+        if (loadUser.IsFailure)
             return StatusCode(500);
+
+        if (loadUser.Data is null)
+            return NotFound($"No User with Id: {userId}");
+        
+        // Add the UserId to the Chat members list
+        Chat chat = loadChat.Data;
+        bool addedUser = chat.UserIds.Add(userId);
+        
+        if (addedUser) // Save the Chat
+        {        
+            var saveChat = await _chatService.Save(chat);
+
+            if (saveChat.IsFailure)
+                return StatusCode(500);
+        }
+        
+        // Add the ChatId to the User's chats list
+        User user = loadUser.Data;
+        bool addedChat = user.ChatIds.Add(id);
+        
+        if (addedChat) // Save the User
+        {
+            var saveUser = await _userService.Save(user);
+
+            if (saveUser.IsFailure)
+                return StatusCode(500);
+        }
 
         return Ok(chat);
     }
@@ -89,25 +114,48 @@ public class ChatsController
     [HttpDelete("{id}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(string id, string userId)
     {
-        var chatLoad = await _chatService.Load(id);
+        // Load the Chat
+        var loadChat = await _chatService.Load(id);
 
-        if (chatLoad.IsFailure)
+        if (loadChat.IsFailure)
             return StatusCode(500);
 
-        if (chatLoad.Data is null)
-            return NotFound($"No Chat for chatId: {id}");
-        
-        Chat chat = chatLoad.Data;
-        chat.UserIds.Remove(userId);
+        if (loadChat.Data is null)
+            return NotFound($"No Chat with Id: {id}");
 
-        if (chat.UserIds.Count == 0)
-            return await Delete(id);
+        // Load the User
+        var loadUser = await _userService.Load(userId);
 
-        var save = await _chatService.Save(chat);
-
-        if (save.IsFailure)
+        if (loadUser.IsFailure)
             return StatusCode(500);
+
+        if (loadUser.Data is null)
+            return NotFound($"No User with Id: {userId}");
         
+        // Remove the UserId from the Chat members list
+        Chat chat = loadChat.Data;
+        bool removedUser = chat.UserIds.Remove(userId);
+        
+        if (removedUser) // Save the Chat
+        {        
+            var saveChat = await _chatService.Save(chat);
+
+            if (saveChat.IsFailure)
+                return StatusCode(500);
+        }
+        
+        // Remove the ChatId from the User's chats list
+        User user = loadUser.Data;
+        bool removedChat = user.ChatIds.Remove(id);
+        
+        if (removedChat) // Save the User
+        {
+            var saveUser = await _userService.Save(user);
+
+            if (saveUser.IsFailure)
+                return StatusCode(500);
+        }
+
         return NoContent();
     }
 
@@ -119,13 +167,15 @@ public class ChatsController
             Id = Guid.NewGuid().ToString(),
             Name = dto.Name,
             UserIds = dto.UserIds,
+            LastMessageAt = DateTime.UtcNow,
+            Preview = "",
             CreatorUserId = dto.CreatorUserId,
             CreatedAt = DateTime.UtcNow
         };
 
-        var chatSave = await _chatService.Save(chat);
+        var save = await _chatService.Save(chat);
 
-        if (chatSave.IsFailure)
+        if (save.IsFailure)
             return StatusCode(500);
                 
         return CreatedAtAction(nameof(Get), new { id = chat.Id }, chat);
