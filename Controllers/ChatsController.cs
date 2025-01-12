@@ -7,10 +7,12 @@ using AnthemAPI.Models;
 public class ChatsController
 (
     ChatService chatService,
+    MessageService messageService,
     UserChatService userChatService
 ) : ControllerBase
 {
     private readonly ChatService _chatService = chatService;
+    private readonly MessageService _messageService = messageService;
     private readonly UserChatService _userChatService = userChatService;
 
     [HttpGet("{id}")]
@@ -71,14 +73,33 @@ public class ChatsController
     [HttpGet("{id}/messages")]
     public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 0)
     {
-        return Ok();
+        var load = await _messageService.LoadBatch(id, page);
+
+        if (load.IsFailure)
+            return StatusCode(500);
+        
+        return Ok(load.Data);
     }
 
     [HttpPost("{id}/messages")]
     public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
     {
         // TODO: send to live chatters
-        return Ok();
+        var message = new Message
+        {
+            ChatId = id,
+            UserId = dto.UserId,
+            SentAt = DateTime.UtcNow,
+            ContentType = dto.ContentType,
+            Content = dto.Content
+        };
+
+        var save = await _messageService.Save(message);
+
+        if (save.IsFailure)
+            return StatusCode(500);
+        
+        return Ok(message);
     }
 
     [HttpPost("{id}/members/{userId}")]
