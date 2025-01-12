@@ -11,4 +11,6 @@ public class Chat
     public required HashSet<string> UserIds { get; set; }
     public required string CreatorUserId { get; set; }
     public required DateTime CreatedAt { get; set; }
+    public required DateTime LastMessageAt { get; set; }
+    public required string Preview { get; set; }
 }
