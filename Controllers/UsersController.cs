@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace AnthemAPI.Controllers;
 
 [ApiController]
-[Route("user")]
-public class UserController
+[Route("users")]
+public class UsersController
 (
     UserService userService
 ): ControllerBase
@@ -27,7 +27,7 @@ public class UserController
         return Ok(user.Data);
     }
 
-    [HttpPut("follow")]
+    [HttpPost("follow")]
     public async Task<IActionResult> Follow([FromBody] Follow follow)
     {
         var followee = await _userService.AddFollower(follow.Followee, follow.Follower);
