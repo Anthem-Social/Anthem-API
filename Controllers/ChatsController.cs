@@ -3,8 +3,8 @@ using AnthemAPI.Services;
 using AnthemAPI.Models;
 
 [ApiController]
-[Route("chat")]
-public class ChatController
+[Route("chats")]
+public class ChatsController
 (
     ChatService chatService,
     UserChatService userChatService
@@ -77,10 +77,11 @@ public class ChatController
     [HttpPost("{id}/messages")]
     public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
     {
+        // TODO: send to live chatters
         return Ok();
     }
 
-    [HttpPost("{id}/member/{userId}")]
+    [HttpPost("{id}/members/{userId}")]
     public async Task<IActionResult> AddMember(string id, string userId)
     {
         var chatLoad = await _chatService.Load(id);
@@ -118,7 +119,7 @@ public class ChatController
         return Ok(chat);
     }
 
-    [HttpDelete("{id}/member/{userId}")]
+    [HttpDelete("{id}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(string id, string userId)
     {
         var userChatLoad = await _userChatService.Load(userId, id);
