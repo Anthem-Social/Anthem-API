@@ -7,13 +7,11 @@ using AnthemAPI.Models;
 public class ChatsController
 (
     ChatService chatService,
-    MessageService messageService,
-    UserChatService userChatService
+    MessageService messageService
 ) : ControllerBase
 {
     private readonly ChatService _chatService = chatService;
     private readonly MessageService _messageService = messageService;
-    private readonly UserChatService _userChatService = userChatService;
 
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id)
@@ -29,45 +27,7 @@ public class ChatsController
     [HttpGet("cards/{userId}")]
     public async Task<IActionResult> GetCards(string userId, [FromQuery] int page = 0)
     {
-        var userChatsResult = await _userChatService.LoadBatch(userId, page);
-        if (userChatsResult.IsFailure)
-            return StatusCode(500);
-
-        List<UserChat> userChats = userChatsResult.Data!;
-        if (userChats.Count == 0)
-            return NoContent();
-
-        List<string> ids = userChats.Select(x => x.ChatId).ToList();
-
-        var chatsResult = await _chatService.GetBatch(ids);
-        if (chatsResult.IsFailure)
-            return StatusCode(500);
-
-        List<Chat> chats = chatsResult.Data!;
-
-        if (userChats.Count != chats.Count)
-            return StatusCode(500);
-
-        List<ChatCard> cards = userChats
-            .Zip(chats, (u, c) =>
-            {
-                if (u.ChatId != c.Id)
-                    throw new InvalidOperationException($"ChatId mismatch: {u.ChatId} != {c.Id}");
-                    
-                return new ChatCard
-                {
-                    ChatId = u.ChatId,
-                    Name = c.Name,
-                    UserIds = c.UserIds,
-                    Preview = u.Preview,
-                    LastMessageAt = u.LastMessageAt,
-                    CreatorUserId = c.CreatorUserId,
-                    CreatedAt = c.CreatedAt
-                };
-            })
-            .ToList();
-        
-        return Ok(cards);
+        return Ok();
     }
 
     [HttpGet("{id}/messages")]
@@ -84,7 +44,6 @@ public class ChatsController
     [HttpPost("{id}/messages")]
     public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
     {
-        // TODO: send to live chatters
         var message = new Message
         {
             ChatId = id,
@@ -97,8 +56,8 @@ public class ChatsController
         var save = await _messageService.Save(message);
 
         if (save.IsFailure)
-            return StatusCode(500);
-        
+            return StatusCode(500); 
+
         return Ok(message);
     }
 
@@ -124,38 +83,12 @@ public class ChatsController
         if (chatSave.IsFailure)
             return StatusCode(500);
 
-        var userChat = new UserChat
-        {
-            UserId = userId,
-            ChatId = id,
-            LastMessageAt = DateTime.UtcNow,
-            Preview = ""
-        };
-        
-        var userChatSave = await _userChatService.Save(userChat);
-
-        if (userChatSave.IsFailure)
-            return StatusCode(500);
-        
         return Ok(chat);
     }
 
     [HttpDelete("{id}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(string id, string userId)
     {
-        var userChatLoad = await _userChatService.Load(userId, id);
-
-        if (userChatLoad.IsFailure)
-            return StatusCode(500);
-
-        if (userChatLoad.Data is null)
-            return NotFound($"No UserChat for userId: {userId}, chatId: {id}");
-
-        var userChatDelete = await _userChatService.Delete(userChatLoad.Data);
-
-        if (userChatDelete.IsFailure)
-            return StatusCode(500);
-
         var chatLoad = await _chatService.Load(id);
 
         if (chatLoad.IsFailure)
@@ -194,20 +127,7 @@ public class ChatsController
 
         if (chatSave.IsFailure)
             return StatusCode(500);
-        
-        var userChat = new UserChat
-        {
-            UserId = dto.CreatorUserId,
-            ChatId = chat.Id,
-            LastMessageAt = DateTime.UtcNow,
-            Preview = ""
-        };
-
-        var userChatSave = _userChatService.Save(userChat);
-
-        if (chatSave.IsFailure)
-            return StatusCode(500);
-        
+                
         return CreatedAtAction(nameof(Get), new { id = chat.Id }, chat);
     }
 
