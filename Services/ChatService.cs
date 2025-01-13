@@ -1,7 +1,9 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using AnthemAPI.Common;
+using AnthemAPI.Common.Helpers;
 using AnthemAPI.Models;
+using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
@@ -53,18 +55,34 @@ public class ChatService
         }
     }
 
-    public async Task<ServiceResult<List<Chat>>> GetBatch(List<string> ids)
+    public async Task<ServiceResult<List<Chat>>> GetAll(List<string> ids, int page)
     {
         try
         {
-            BatchGet<Chat> batch = _context.CreateBatchGet<Chat>();
-            ids.ForEach(batch.AddKey);
-            await batch.ExecuteAsync();
-            return ServiceResult<List<Chat>>.Success(batch.Results);
+            var batches = new List<BatchGet<Chat>>();
+
+            for (int i = 0; i < ids.Count; i += DYNAMO_DB_BATCH_GET_ITEM_LIMIT)
+            {
+                List<string> chatIds  = ids.Skip(i).Take(DYNAMO_DB_BATCH_GET_ITEM_LIMIT).ToList();
+                var batch = _context.CreateBatchGet<Chat>();
+                chatIds.ForEach(batch.AddKey);
+                batches.Add(batch);
+            }
+
+            await _context.ExecuteBatchGetAsync(batches.ToArray());
+
+            var chats = batches
+                .SelectMany(b => b.Results)
+                .OrderByDescending(c => c.LastMessageAt)
+                .Skip(page > 1 ? Helpers.CalculatePaginationToken(page, CHAT_BATCH_LIMIT) : 0)
+                .Take(CHAT_BATCH_LIMIT)
+                .ToList();
+
+            return ServiceResult<List<Chat>>.Success(chats);
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Chat>>.Failure(e, "Failed to get batch.", "ChatService.GetBatch()");
+            return ServiceResult<List<Chat>>.Failure(e, "Failed to get all.", "ChatService.GetAll()");
         }
     }
 }
