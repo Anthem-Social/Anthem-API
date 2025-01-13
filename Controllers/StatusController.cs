@@ -29,7 +29,8 @@ public class StatusController
         if (friends.Data is null || friends.IsFailure)
             return;
 
-        List<string> friendIds = friends.Data.Friends.ToList();
+        // TODO: fetch from followService
+        List<string> friendIds = friends.Data.ChatIds.ToList();
 
         // Add the user's connection id to each friends' status connection list
         var add = await _statusConnectionService.AddConnectionId(friendIds, connection.Id);

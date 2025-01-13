@@ -58,10 +58,9 @@ public static class Helpers
         }
     }
 
-    public static string? CalculatePaginationToken(int page, int pageSize)
+    public static int CalculatePaginationToken(int page, int pageSize)
     {
-        if (page <= 1) return null;
         var skip = (page - 1) * pageSize;
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(skip.ToString()));
+        return skip;
     }
 }

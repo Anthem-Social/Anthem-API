@@ -27,19 +27,9 @@ public class UsersController
         return Ok(user.Data);
     }
 
-    [HttpPost("follow")]
-    public async Task<IActionResult> Follow([FromBody] Follow follow)
+    [HttpPost("{id}/follower/{followerId}")]
+    public async Task<IActionResult> Follow(string id, string followerId)
     {
-        var followee = await _userService.AddFollower(follow.Followee, follow.Follower);
-
-        if (followee.IsFailure)
-            return StatusCode(500);
-
-        var follower = await _userService.AddFollowing(follow.Follower, follow.Followee);
-
-        if (follower.IsFailure)
-            return StatusCode(500);
-
-        return Ok(followee.Data);
+        return Ok();
     }
 }
