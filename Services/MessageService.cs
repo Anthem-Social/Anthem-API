@@ -45,13 +45,17 @@ public class MessageService
                     }
                 },
                 BackwardSearch = true,
-                Limit = MESSAGE_BATCH_LIMIT,
-                PaginationToken = page > 1 ? Helpers.CalculatePaginationToken(page, MESSAGE_BATCH_LIMIT) : null
+                Limit = MESSAGE_BATCH_LIMIT
             };
 
             var search = _context.FromQueryAsync<Message>(query);
 
-            List<Message> messages = await search.GetRemainingAsync();
+            var messages = new List<Message>();
+
+            for (int x = 0; x < page; x++)
+            {
+                messages = await search.GetNextSetAsync();
+            }
 
             return ServiceResult<List<Message>>.Success(messages);
         }
