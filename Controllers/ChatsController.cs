@@ -23,17 +23,25 @@ public class ChatsController
         if (load.IsFailure)
             return StatusCode(500);
         
+        if (load.Data is null)
+            return NotFound();
+        
         return Ok(load.Data);
     }
 
-    [HttpGet("cards/{userId}")]
-    public async Task<IActionResult> GetCards(string userId, [FromQuery] int page = 0)
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromBody] List<string> ids, [FromQuery] int page = 1)
     {
-        return Ok();
+        var all = await _chatService.GetAll(ids, page);
+
+        if (all.IsFailure)
+            return StatusCode(500);
+        
+        return Ok(all.Data);
     }
 
     [HttpGet("{id}/messages")]
-    public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 0)
+    public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 1)
     {
         var load = await _messageService.LoadBatch(id, page);
 
@@ -46,11 +54,14 @@ public class ChatsController
     [HttpPost("{id}/messages")]
     public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
     {
+        // TODO: send to live chatters
+        var now = DateTime.UtcNow;
         var message = new Message
         {
             ChatId = id,
+            Id = $"{now:o}#{dto.UserId}",
             UserId = dto.UserId,
-            SentAt = DateTime.UtcNow,
+            CreatedAt = now,
             ContentType = dto.ContentType,
             Content = dto.Content
         };
@@ -184,6 +195,7 @@ public class ChatsController
     [HttpPatch("{id}/name")]
     public async Task<IActionResult> Rename(string id, string name)
     {
+        // Load the Chat
         var load = await _chatService.Load(id);
 
         if (load.IsFailure)
@@ -192,10 +204,11 @@ public class ChatsController
         if (load.Data is null)
             return NotFound();
         
+        // Update the name
         Chat chat = load.Data;
-
         chat.Name = name;
 
+        // Save the Chat
         var save = await _chatService.Save(chat);
 
         if (save.IsFailure)
