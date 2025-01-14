@@ -1,5 +1,6 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 using AnthemAPI.Common.Helpers;
 using AnthemAPI.Models;
@@ -9,11 +10,14 @@ namespace AnthemAPI.Services;
 
 public class ChatService
 {
+    private readonly IAmazonDynamoDB _client;
     private readonly DynamoDBContext _context;
+    private const string TABLE_NAME = "Chats";
     
-    public ChatService(IAmazonDynamoDB db)
+    public ChatService(IAmazonDynamoDB client)
     {
-        _context = new DynamoDBContext(db);
+        _client = client;
+        _context = new DynamoDBContext(client);
     }
 
     public async Task<ServiceResult<Chat?>> Load(string id)
@@ -46,7 +50,8 @@ public class ChatService
     {
         try
         {
-            await _context.DeleteAsync(id);
+            var load = await Load(id);
+            await _context.DeleteAsync(load.Data);
             return ServiceResult<bool>.Success(true);
         }
         catch (Exception e)
@@ -55,7 +60,38 @@ public class ChatService
         }
     }
 
-    public async Task<ServiceResult<List<Chat>>> GetAll(List<string> ids, int page)
+    public async Task<ServiceResult<bool>> Update(string id, DateTime lastMessageAt, string preview)
+    {
+        try
+        {
+            var update = new UpdateItemRequest
+            {
+                TableName = TABLE_NAME,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    ["Id"] = new AttributeValue { S = id }
+                },
+                UpdateExpression = "SET Preview = :preview, LastMessageAt = :lastMessageAt",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":preview"] = new AttributeValue { S = preview },
+                    [":lastMessageAt"] = new AttributeValue { S = lastMessageAt.ToString("o") }
+                }
+            };
+
+            var response = await _client.UpdateItemAsync(update);
+
+            Console.WriteLine("attributes: " + response.Attributes);
+
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, "Failed to update.", "ChatService.Update()");
+        }
+    }
+
+    public async Task<ServiceResult<List<Chat>>> GetPage(List<string> ids, int page)
     {
         try
         {
