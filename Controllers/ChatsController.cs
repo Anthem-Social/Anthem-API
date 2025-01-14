@@ -29,17 +29,6 @@ public class ChatsController
         return Ok(load.Data);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll([FromBody] List<string> ids, [FromQuery] int page = 1)
-    {
-        var all = await _chatService.GetAll(ids, page);
-
-        if (all.IsFailure)
-            return StatusCode(500);
-        
-        return Ok(all.Data);
-    }
-
     [HttpGet("{id}/messages")]
     public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 1)
     {
@@ -69,7 +58,13 @@ public class ChatsController
         var save = await _messageService.Save(message);
 
         if (save.IsFailure)
-            return StatusCode(500); 
+            return StatusCode(500);
+        
+        // Update the Chat
+        var update = await _chatService.Update(id, message.CreatedAt, message.Content);
+
+        if (update.IsFailure)
+            return StatusCode(500);
 
         return Ok(message);
     }
@@ -173,6 +168,7 @@ public class ChatsController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] ChatCreate dto)
     {
+        // Create the new Chat
         var chat = new Chat
         {
             Id = Guid.NewGuid().ToString(),
@@ -188,7 +184,13 @@ public class ChatsController
 
         if (save.IsFailure)
             return StatusCode(500);
-                
+
+        // Add the Chat Id to the Members' ChatIds Lists
+        var add = await _userService.AddChatId(chat.UserIds.ToList(), chat.Id);
+
+        if (add.IsFailure)
+            return StatusCode(500);
+        
         return CreatedAtAction(nameof(Get), new { id = chat.Id }, chat);
     }
 
