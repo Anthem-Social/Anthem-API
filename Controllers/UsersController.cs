@@ -1,7 +1,6 @@
 using AnthemAPI.Models;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AnthemAPI.Controllers;
 
@@ -10,10 +9,12 @@ namespace AnthemAPI.Controllers;
 public class UsersController
 (
     ChatService chatService,
+    FollowService followService,
     UserService userService
 ): ControllerBase
 {
     private readonly ChatService _chatService = chatService;
+    private readonly FollowService _followService = followService;
     private readonly UserService _userService = userService;
 
     [HttpGet("{id}")]
@@ -30,10 +31,22 @@ public class UsersController
         return Ok(load.Data);
     }
 
-    [HttpPost("{id}/follower/{followerId}")]
-    public async Task<IActionResult> Follow(string id, string followerId)
+    [HttpPost("{follower}/follow/{followee}")]
+    public async Task<IActionResult> Follow(string follower, string followee)
     {
-        return Ok();
+        var follow = new Follow
+        {
+            Followee = followee,
+            Follower = follower,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var save = await _followService.Save(follow);
+
+        if (save.IsFailure)
+            return StatusCode(500);
+        
+        return Created();
     }
 
     [HttpGet("{id}/chats")]
