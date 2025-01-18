@@ -2,13 +2,14 @@ using Amazon.DynamoDBv2.DataModel;
 
 namespace AnthemAPI.Models;
 
+[DynamoDBTable("Follows")]
 public class Follow
 {
     [DynamoDBHashKey]
-    [DynamoDBGlobalSecondaryIndexRangeKey("FollowerUserId-index")]
-    public required string FolloweeUserId { get; set; }
+    [DynamoDBGlobalSecondaryIndexRangeKey("Follower-index")]
+    public required string Followee { get; set; }
     [DynamoDBRangeKey]
-    [DynamoDBGlobalSecondaryIndexHashKey("FollowerUserId-index")]
-    public required string FollowerUserId { get; set; }
-    public required DateTime FollowedAt { get; set; }
+    [DynamoDBGlobalSecondaryIndexHashKey("Follower-index")]
+    public required string Follower { get; set; }
+    public required DateTime CreatedAt { get; set; }
 }
