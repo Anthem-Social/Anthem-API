@@ -9,11 +9,11 @@ using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
-public class JobService
+public class StatusJobService
 {
     private readonly ISchedulerFactory _schedulerFactory;
 
-    public JobService(ISchedulerFactory schedulerFactory)
+    public StatusJobService(ISchedulerFactory schedulerFactory)
     {
         _schedulerFactory = schedulerFactory;
     }
@@ -30,7 +30,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to check if exists for {userId}.", "JobService.Exists()");
+            return ServiceResult<bool>.Failure(e, $"Failed to check if exists for {userId}.", "StatusJobService.Exists()");
         }
     }
 
@@ -62,7 +62,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to schedule for {userId}.", "JobService.Schedule()");
+            return ServiceResult<bool>.Failure(e, $"Failed to schedule for {userId}.", "StatusJobService.Schedule()");
         }
     }
 
@@ -80,7 +80,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to unschedule for {userId}.", "JobService.Unschedule()");
+            return ServiceResult<bool>.Failure(e, $"Failed to unschedule for {userId}.", "StatusJobService.Unschedule()");
         }
     }
 
@@ -94,7 +94,7 @@ public class JobService
 
             if (job is null)
             {
-                return ServiceResult<bool>.Failure(null, $"No job detail for {userId}.", "JobService.SetPollingTier()");
+                return ServiceResult<bool>.Failure(null, $"No job detail for {userId}.", "StatusJobService.SetPollingTier()");
             }
 
             ITrigger trigger = TriggerBuilder.Create()
@@ -118,7 +118,7 @@ public class JobService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to set polling tier for {userId}.", "JobService.SetPollingTier()");
+            return ServiceResult<bool>.Failure(e, $"Failed to set polling tier for {userId}.", "StatusJobService.SetPollingTier()");
         }
     }
 }
@@ -127,7 +127,7 @@ public class EmitStatus : IJob
 {
     private readonly AuthorizationService _authorizationService;
     private readonly IAmazonApiGatewayManagementApi _client;
-    private readonly JobService _jobService;
+    private readonly StatusJobService _jobService;
     private readonly SpotifyService _spotifyService;
     private readonly StatusConnectionService _statusConnectionService;
     private readonly StatusService _statusService;
@@ -136,7 +136,7 @@ public class EmitStatus : IJob
     public EmitStatus(
         AuthorizationService authorizationService,
         IConfiguration configuration,
-        JobService jobService,
+        StatusJobService jobService,
         SpotifyService spotifyService,
         StatusConnectionService statusConnectionService,
         StatusService statusService,
