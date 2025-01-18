@@ -6,14 +6,45 @@ using AnthemAPI.Models;
 [Route("chats")]
 public class ChatsController
 (
+    ChatConnectionService chatConnectionService,
     ChatService chatService,
     MessageService messageService,
     UserService userService
 ) : ControllerBase
 {
+    private readonly ChatConnectionService _chatConnectionService = chatConnectionService;
     private readonly ChatService _chatService = chatService;
     private readonly MessageService _messageService = messageService;
     private readonly UserService _userService = userService;
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] ChatCreate dto)
+    {
+        // Create the new Chat
+        var chat = new Chat
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = dto.Name,
+            UserIds = dto.UserIds,
+            LastMessageAt = DateTime.UtcNow,
+            Preview = "",
+            CreatorUserId = dto.CreatorUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var save = await _chatService.Save(chat);
+
+        if (save.IsFailure)
+            return StatusCode(500);
+
+        // Add the Chat Id to the Members' ChatIds Lists
+        var add = await _userService.AddChatIdToMembers(chat.UserIds.ToList(), chat.Id);
+
+        if (add.IsFailure)
+            return StatusCode(500);
+        
+        return Created();
+    }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id)
@@ -29,48 +60,35 @@ public class ChatsController
         return Ok(load.Data);
     }
 
-    [HttpGet("{id}/messages")]
-    public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 1)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
     {
-        var load = await _messageService.LoadBatch(id, page);
-
-        if (load.IsFailure)
-            return StatusCode(500);
+        var result = await _chatService.Delete(id);
         
-        return Ok(load.Data);
+        if (result.IsFailure)
+            return StatusCode(500);
+
+        return NoContent();
     }
 
-    [HttpPost("{id}/messages")]
-    public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
+    // [HttpPost("{id}/connection/{connectionId}")]
+    [HttpPost("connect")]
+    public async void CreateConnection([FromBody] ConnectionA connection)
     {
-        // TODO: send to live chatters
-        var now = DateTime.UtcNow;
-        var message = new Message
-        {
-            ChatId = id,
-            Id = $"{now:o}#{dto.UserId}",
-            UserId = dto.UserId,
-            CreatedAt = now,
-            ContentType = dto.ContentType,
-            Content = dto.Content
-        };
+        Console.WriteLine("Adding Connection " + connection.Id);
+        await _chatConnectionService.AddConnectionId(connection.ChatId, connection.Id);
+    }
 
-        var save = await _messageService.Save(message);
-
-        if (save.IsFailure)
-            return StatusCode(500);
-        
-        // Update the Chat
-        var update = await _chatService.Update(id, message.CreatedAt, message.Content);
-
-        if (update.IsFailure)
-            return StatusCode(500);
-
-        return Ok(message);
+    // [HttpDelete("{id}/connection/{connectionId}")]
+    [HttpPost("disconnect")]
+    public async void DeleteConnection([FromBody] ConnectionA connection)
+    {
+        Console.WriteLine("Deleting Connection " + connection.Id);
+        await _chatConnectionService.RemoveConnectionId(connection.ChatId, connection.Id);
     }
 
     [HttpPost("{id}/members/{userId}")]
-    public async Task<IActionResult> AddMember(string id, string userId)
+    public async Task<IActionResult> CreateMember(string id, string userId)
     {
         // Load the Chat
         var loadChat = await _chatService.Load(id);
@@ -118,7 +136,7 @@ public class ChatsController
     }
 
     [HttpDelete("{id}/members/{userId}")]
-    public async Task<IActionResult> RemoveMember(string id, string userId)
+    public async Task<IActionResult> DeleteMember(string id, string userId)
     {
         // Load the Chat
         var loadChat = await _chatService.Load(id);
@@ -165,33 +183,58 @@ public class ChatsController
         return NoContent();
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ChatCreate dto)
+    [HttpPost("{id}/messages")]
+    public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
     {
-        // Create the new Chat
-        var chat = new Chat
+        // TODO: send to live chatters
+        var now = DateTime.UtcNow;
+        var message = new Message
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = dto.Name,
-            UserIds = dto.UserIds,
-            LastMessageAt = DateTime.UtcNow,
-            Preview = "",
-            CreatorUserId = dto.CreatorUserId,
-            CreatedAt = DateTime.UtcNow
+            ChatId = id,
+            Id = $"{now:o}#{dto.UserId}",
+            UserId = dto.UserId,
+            CreatedAt = now,
+            ContentType = dto.ContentType,
+            Content = dto.Content
         };
 
-        var save = await _chatService.Save(chat);
+        var save = await _messageService.Save(message);
 
         if (save.IsFailure)
             return StatusCode(500);
+        
+        // Update the Chat
+        var update = await _chatService.Update(id, message.CreatedAt, message.Content);
 
-        // Add the Chat Id to the Members' ChatIds Lists
-        var add = await _userService.AddChatId(chat.UserIds.ToList(), chat.Id);
+        if (update.IsFailure)
+            return StatusCode(500);
 
-        if (add.IsFailure)
+        return Created();
+    }
+
+    [HttpGet("{id}/messages")]
+    public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 1)
+    {
+        var load = await _messageService.LoadBatch(id, page);
+
+        if (load.IsFailure)
             return StatusCode(500);
         
-        return CreatedAtAction(nameof(Get), new { id = chat.Id }, chat);
+        return Ok(load.Data);
+    }
+
+    [HttpDelete("{id}/messages/{messageId}")]
+    public async Task<IActionResult> DeleteMessage(string id, string messageId)
+    {
+        var delete = await _messageService.Delete(id, messageId);
+
+        if (delete.Data is null)
+            return NotFound();
+        
+        if (delete.IsFailure)
+            return StatusCode(500);
+        
+        return NoContent();
     }
 
     [HttpPatch("{id}/name")]
@@ -217,16 +260,5 @@ public class ChatsController
             return StatusCode(500);
 
         return Ok(chat);
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
-    {
-        var result = await _chatService.Delete(id);
-        
-        if (result.IsFailure)
-            return StatusCode(500);
-
-        return NoContent();
     }
 }
