@@ -73,7 +73,7 @@ public class ChatsController
 
     // [HttpPost("{id}/connection/{connectionId}")]
     [HttpPost("connect")]
-    public async void CreateConnection([FromBody] ConnectionA connection)
+    public async void CreateConnection([FromBody] ChatConnectionCreate connection)
     {
         Console.WriteLine("Adding Connection " + connection.Id);
         await _chatConnectionService.AddConnectionId(connection.ChatId, connection.Id);
@@ -81,7 +81,7 @@ public class ChatsController
 
     // [HttpDelete("{id}/connection/{connectionId}")]
     [HttpPost("disconnect")]
-    public async void DeleteConnection([FromBody] ConnectionA connection)
+    public async void DeleteConnection([FromBody] ChatConnectionCreate connection)
     {
         Console.WriteLine("Deleting Connection " + connection.Id);
         await _chatConnectionService.RemoveConnectionId(connection.ChatId, connection.Id);

@@ -20,6 +20,7 @@ public class StatusController
     private readonly StatusService _statusService = statusService;
     private readonly UserService _userService = userService;
 
+    // [HttpPost("{userId}/connection/{connectionId}")]
     [HttpPost("connect")]
     public async void Connect([FromBody] Connection connection)
     {
