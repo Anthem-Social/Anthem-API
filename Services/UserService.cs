@@ -44,7 +44,7 @@ public class UserService
         }
     }
 
-    public async Task<ServiceResult<User?>> AddChatId(List<string> ids, string chatId)
+    public async Task<ServiceResult<User?>> AddChatIdToMembers(List<string> ids, string chatId)
     {
         try
         {
