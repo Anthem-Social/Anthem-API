@@ -1,19 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
 using AnthemAPI.Services;
 using AnthemAPI.Models;
+using AnthemAPI.Common;
 
 [ApiController]
 [Route("status")]
 public class StatusController
 (
-    JobService jobService,
+    FollowService followService,
     StatusConnectionService statusConnectionService,
+    StatusJobService statusJobService,
     StatusService statusService,
     UserService userService
 ) : ControllerBase
 {
-    private readonly JobService _jobService = jobService;
+    private readonly FollowService _followService = followService;
     private readonly StatusConnectionService _statusConnectionService = statusConnectionService;
+    private readonly StatusJobService _statusJobService = statusJobService;
     private readonly StatusService _statusService = statusService;
     private readonly UserService _userService = userService;
 
@@ -24,29 +27,42 @@ public class StatusController
         Console.WriteLine("Id: " + connection.Id);
         Console.WriteLine("UserId: " + connection.UserId);
 
-        // Get all of the user's friends' ids
-        var friends = await _userService.Load(connection.UserId);            
-        if (friends.Data is null || friends.IsFailure)
+        // Load the user
+        var loadUser = await _userService.Load(connection.UserId);            
+        if (loadUser.Data is null || loadUser.IsFailure)
             return;
 
-        // TODO: fetch from followService
-        List<string> friendIds = friends.Data.ChatIds.ToList();
+        User user = loadUser.Data;
 
-        // Add the user's connection id to each friends' status connection list
-        var add = await _statusConnectionService.AddConnectionId(friendIds, connection.Id);
+        // Load everyone the User follows
+        var loadAllFollowing = await _followService.LoadAllFollowing(user.Id);
+        if (loadAllFollowing.Data is null || loadAllFollowing.IsFailure)
+            return;
+        
+        List<string> followees = loadAllFollowing.Data.Select(f => f.Followee).ToList();
+
+        // Get those who follow back
+        var getMutuals = await _followService.GetMutuals(user.Id, followees);
+        if (getMutuals.Data is null || getMutuals.IsFailure)
+            return;
+
+        List<string> friends = getMutuals.Data.Select(f => f.Followee).ToList();
+
+        // Add the Connection Id to each friends' Status Connection list
+        var add = await _statusConnectionService.AddConnectionId(friends, connection.Id);
         if (add.IsFailure)
             return;
 
         // Schedule each job if not already scheduled
-        foreach (var id in friendIds)
+        foreach (var friend in friends)
         {
-            var exists = await _jobService.Exists(id);
+            var exists = await _statusJobService.Exists(friend);
             if (exists.IsFailure)
                 continue;
 
             if (!exists.Data)
             {
-                await _jobService.Schedule(id);
+                await _statusJobService.Schedule(friend);
             }
         }
     }
