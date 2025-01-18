@@ -18,12 +18,14 @@ builder.Services.AddScoped<DynamoDBContext>();
 // builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<AuthorizationService>();
+builder.Services.AddScoped<ChatConnectionService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<CommentService>();
-builder.Services.AddScoped<JobService>();
+builder.Services.AddScoped<FollowService>();
 builder.Services.AddScoped<LikeService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<StatusConnectionService>();
+builder.Services.AddScoped<StatusJobService>();
 builder.Services.AddScoped<StatusService>();
 builder.Services.AddScoped<UserService>();
 
