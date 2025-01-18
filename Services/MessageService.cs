@@ -26,7 +26,24 @@ public class MessageService
         }
         catch (Exception e)
         {
-            return ServiceResult<Message>.Failure(e, $"Failed to save to {message.ChatId} for {message.UserId}.", "MessageService.Save()");
+            return ServiceResult<Message>.Failure(e, $"Failed to save for {message.ChatId} and {message.Id}.", "MessageService.Save()");
+        }
+    }
+
+    public async Task<ServiceResult<Message?>> Delete(string chatId, string id)
+    {
+        try
+        {
+            var message = await _context.LoadAsync<Message>(chatId, id);
+
+            if (message is not null)
+                await _context.DeleteAsync(message);
+            
+            return ServiceResult<Message?>.Success(message);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Message?>.Failure(e, $"Failed to delete for {chatId} and {id}.", "MessageService.Delete()");
         }
     }
 
