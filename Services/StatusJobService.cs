@@ -74,7 +74,7 @@ public class StatusJobService
 
             await scheduler.UnscheduleJob(new TriggerKey(userId, pollingGroup));
 
-            Console.WriteLine("Unscheduled " + userId);
+            Console.WriteLine("Unscheduled " + userId + " " + pollingGroup);
 
             return ServiceResult<bool>.Success(true);
         }
@@ -112,7 +112,7 @@ public class StatusJobService
             
             await scheduler.RescheduleJob(new TriggerKey(userId, previousGroup), trigger);
 
-            Console.WriteLine("Set tier to " + tier.Group + " for " + userId);
+            Console.WriteLine("Set tier for " + userId + " to " + tier.Group);
 
             return ServiceResult<bool>.Success(true);
         }
@@ -196,6 +196,9 @@ public class EmitStatus : IJob
 
             HashSet<string> connectionIds = connections.Data.ConnectionIds;
 
+            if (connectionIds.Count == 0)
+                throw new Exception("ConnectionIds list is empty.");
+
             // Get the user's Spotify status
             var getStatus = await _spotifyService.GetStatus(authorization.AccessToken, userId);
 
@@ -250,6 +253,7 @@ public class EmitStatus : IJob
                 }
                 catch (GoneException)
                 {
+                    Console.WriteLine("Adding " + connectionId + " to gone.");
                     gone.Add(connectionId);
                 }
             });
@@ -275,7 +279,7 @@ public class EmitStatus : IJob
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Emit status job failed.\n{e.Message}");
+            Console.WriteLine($"Emit status job failed.\n{e.StackTrace}");
             await _jobService.Unschedule(userId, pollingGroup);
             await _statusConnectionService.Clear(userId);
         }
