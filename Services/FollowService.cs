@@ -153,7 +153,7 @@ public class FollowService
         try
         {
             var batch = _context.CreateBatchGet<Follow>();
-            followees.ForEach(followee => batch.AddKey(followee, follower));
+            followees.ForEach(followee => batch.AddKey(follower, followee));
             await batch.ExecuteAsync();
             return ServiceResult<List<Follow>>.Success(batch.Results);
         }
