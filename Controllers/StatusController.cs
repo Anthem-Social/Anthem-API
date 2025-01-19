@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using AnthemAPI.Services;
 using AnthemAPI.Models;
-using AnthemAPI.Common;
 
 [ApiController]
 [Route("status")]
@@ -47,8 +46,8 @@ public class StatusController
         if (getMutuals.Data is null || getMutuals.IsFailure)
             return;
 
-        List<string> friends = getMutuals.Data.Select(f => f.Followee).ToList();
-
+        List<string> friends = getMutuals.Data.Select(f => f.Follower).ToList();
+        
         // Add the Connection Id to each friends' Status Connection list
         var add = await _statusConnectionService.AddConnectionId(friends, connection.Id);
         if (add.IsFailure)
