@@ -6,6 +6,7 @@ using Quartz;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
 using static AnthemAPI.Common.Constants;
+using AnthemAPI.Common.Helpers;
 
 namespace AnthemAPI.Services;
 
@@ -179,8 +180,9 @@ public class EmitStatus : IJob
                 if (refresh.Data is null || refresh.IsFailure)
                     throw new Exception(refresh.ErrorMessage);
 
-                JsonElement refreshJson = JsonDocument.Parse(refresh.Data!).RootElement;
-                var save = await _authorizationService.Save(refreshJson);
+                string complete = Helpers.AddRefreshTokenProperty(refresh.Data, authorization.RefreshToken);
+                JsonElement element = JsonDocument.Parse(complete).RootElement;
+                var save = await _authorizationService.Save(element);
 
                 if (save.Data is null || save.IsFailure)
                     throw new Exception(save.ErrorMessage);

@@ -77,15 +77,7 @@ public class TokenService
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
-            if (json.TryGetProperty("refresh_token", out var token))
-            {
-                string encrypted = Helpers.Encrypt(_configuration["EncryptionKey"]!, token.GetString()!);
-                string result = json.GetRawText().Replace(token.GetString()!, encrypted);
-
-                return ServiceResult<string>.Success(result);
-            }
-            
-            return ServiceResult<string>.Failure(null, $"No refresh_token property. {json}", "TokenService.Refresh()");
+            return ServiceResult<string>.Success(json.GetRawText());
         }
         catch (Exception e)
         {

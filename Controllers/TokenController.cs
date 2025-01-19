@@ -1,3 +1,4 @@
+using AnthemAPI.Common.Helpers;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
@@ -22,9 +23,9 @@ public class TokenController
         if (swap.Data is null || swap.IsFailure)
             return StatusCode(500);
 
-        JsonElement json = JsonDocument.Parse(swap.Data!).RootElement;
+        JsonElement element = JsonDocument.Parse(swap.Data!).RootElement;
 
-        var save = await _authorizationService.Save(json);
+        var save = await _authorizationService.Save(element);
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);
 
@@ -38,9 +39,10 @@ public class TokenController
         if (refresh.Data is null || refresh.IsFailure)
             return StatusCode(500);
 
-        JsonElement json = JsonDocument.Parse(refresh.Data!).RootElement;
+        string complete = Helpers.AddRefreshTokenProperty(refresh.Data, refreshToken);
+        JsonElement element = JsonDocument.Parse(complete).RootElement;
 
-        var save = await _authorizationService.Save(json);
+        var save = await _authorizationService.Save(element);
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);
 
