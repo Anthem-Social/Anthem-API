@@ -115,10 +115,7 @@ public class StatusConnectionService
                 UpdateExpression = "DELETE ConnectionIds :connectionIds",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    [":connectionIds"] = new AttributeValue
-                    {
-                        SS = connectionIds
-                    }
+                    [":connectionIds"] = new AttributeValue { SS = connectionIds }
                 },
                 ReturnValues = ReturnValue.UPDATED_NEW
             };
