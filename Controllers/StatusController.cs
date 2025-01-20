@@ -66,18 +66,4 @@ public class StatusController
             }
         }
     }
-
-    [HttpGet("{userId}")]
-    public async Task<IActionResult> Get(string userId)
-    {
-        var status = await _statusService.Load(userId);
-
-        if (status.IsFailure)
-            return StatusCode(500);
-
-        if (status.Data is null)
-            return NotFound();
-
-        return Ok(status.Data);
-    }
 }
