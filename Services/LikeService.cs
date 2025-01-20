@@ -23,7 +23,7 @@ public class LikeService
         }
         catch (Exception e)
         {
-            return ServiceResult<Like>.Failure(e, $"Failed to save {like.UserId} for {like.PostId}.", "LikeService.Save()");
+            return ServiceResult<Like>.Failure(e, $"Failed to save {like.Id} for {like.PostId}.", "LikeService.Save()");
         }
     }
 
@@ -50,7 +50,7 @@ public class LikeService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {like.UserId} for {like.PostId}.", "LikeService.Delete()");
+            return ServiceResult<bool>.Failure(e, $"Failed to delete {like.Id} for {like.PostId}.", "LikeService.Delete()");
         }
     }
 }

@@ -18,16 +18,16 @@ public class UserService
         _context = new DynamoDBContext(client);
     }
 
-    public async Task<ServiceResult<User?>> Load(string id)
+    public async Task<ServiceResult<User?>> Load(string userId)
     {
         try
         {
-            var user = await _context.LoadAsync<User>(id);
+            var user = await _context.LoadAsync<User>(userId);
             return ServiceResult<User?>.Success(user);
         }
         catch (Exception e)
         {
-            return ServiceResult<User?>.Failure(e, $"Failed to load for {id}.", "UserService.Load()");
+            return ServiceResult<User?>.Failure(e, $"Failed to load for {userId}.", "UserService.Load()");
         }
     }
 
@@ -44,13 +44,13 @@ public class UserService
         }
     }
 
-    public async Task<ServiceResult<User?>> AddChatIdToMembers(List<string> ids, string chatId)
+    public async Task<ServiceResult<User?>> AddChatIdToMembers(List<string> userIds, string chatId)
     {
         try
         {
             var batch = new BatchExecuteStatementRequest
             {
-                Statements = ids.Select(userId => new BatchStatementRequest
+                Statements = userIds.Select(userId => new BatchStatementRequest
                 {
                     Statement = $"UPDATE {TABLE_NAME}" +
                                 " SET ChatIds = SET_ADD(ChatIds, ?)" +

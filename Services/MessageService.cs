@@ -30,11 +30,11 @@ public class MessageService
         }
     }
 
-    public async Task<ServiceResult<Message?>> Delete(string chatId, string id)
+    public async Task<ServiceResult<Message?>> Delete(string chatId, string messageId)
     {
         try
         {
-            var message = await _context.LoadAsync<Message>(chatId, id);
+            var message = await _context.LoadAsync<Message>(chatId, messageId);
 
             if (message is not null)
                 await _context.DeleteAsync(message);
@@ -43,7 +43,7 @@ public class MessageService
         }
         catch (Exception e)
         {
-            return ServiceResult<Message?>.Failure(e, $"Failed to delete for {chatId} and {id}.", "MessageService.Delete()");
+            return ServiceResult<Message?>.Failure(e, $"Failed to delete for {chatId} and {messageId}.", "MessageService.Delete()");
         }
     }
 

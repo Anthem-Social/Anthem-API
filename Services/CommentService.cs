@@ -50,7 +50,7 @@ public class CommentService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {comment.UserId} for {comment.PostId}.", "CommentService.Delete()");
+            return ServiceResult<bool>.Failure(e, $"Failed to delete {comment.Id} for {comment.PostId}.", "CommentService.Delete()");
         }
     }
 }

@@ -54,17 +54,17 @@ public class AuthorizationService
             string refreshToken = json.GetProperty("refresh_token").GetString()!;
             long expiresAt = json.GetProperty("expires_in").GetInt64() + DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             
-            var result = await _spotifyService.GetId(accessToken);
+            var result = await _spotifyService.GetUserId(accessToken);
 
             if (result.Data is null || result.IsFailure)
             {
-                return ServiceResult<Authorization>.Failure(null, "Failed to get id.", "AuthorizationService.Save(json)");
+                return ServiceResult<Authorization>.Failure(null, "Failed to get userId.", "AuthorizationService.Save(json)");
             }
 
-            string id = result.Data!;
+            string userId = result.Data!;
             var authorization = new Authorization
             {
-                UserId = id,
+                UserId = userId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresAt = expiresAt

@@ -20,16 +20,16 @@ public class ChatService
         _context = new DynamoDBContext(client);
     }
 
-    public async Task<ServiceResult<Chat?>> Load(string id)
+    public async Task<ServiceResult<Chat?>> Load(string chatId)
     {
         try
         {
-            var chat = await _context.LoadAsync<Chat?>(id);
+            var chat = await _context.LoadAsync<Chat?>(chatId);
             return ServiceResult<Chat?>.Success(chat);
         }
         catch (Exception e)
         {
-            return ServiceResult<Chat?>.Failure(e, $"Failed to load for {id}.", "ChatService.Load()");
+            return ServiceResult<Chat?>.Failure(e, $"Failed to load for {chatId}.", "ChatService.Load()");
         }
     }
 
@@ -46,21 +46,21 @@ public class ChatService
         }
     }
 
-    public async Task<ServiceResult<bool>> Delete(string id)
+    public async Task<ServiceResult<bool>> Delete(string chatId)
     {
         try
         {
-            var load = await Load(id);
+            var load = await Load(chatId);
             await _context.DeleteAsync(load.Data);
             return ServiceResult<bool>.Success(true);
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {id}.", "ChatService.Delete()");
+            return ServiceResult<bool>.Failure(e, $"Failed to delete {chatId}.", "ChatService.Delete()");
         }
     }
 
-    public async Task<ServiceResult<bool>> Update(string id, DateTime lastMessageAt, string preview)
+    public async Task<ServiceResult<bool>> Update(string chatId, DateTime lastMessageAt, string preview)
     {
         try
         {
@@ -69,7 +69,7 @@ public class ChatService
                 TableName = TABLE_NAME,
                 Key = new Dictionary<string, AttributeValue>
                 {
-                    ["Id"] = new AttributeValue { S = id }
+                    ["Id"] = new AttributeValue { S = chatId }
                 },
                 UpdateExpression = "SET Preview = :preview, LastMessageAt = :lastMessageAt",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
@@ -87,21 +87,21 @@ public class ChatService
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, "Failed to update.", "ChatService.Update()");
+            return ServiceResult<bool>.Failure(e, $"Failed to update for {chatId}.", "ChatService.Update()");
         }
     }
 
-    public async Task<ServiceResult<List<Chat>>> GetPage(List<string> ids, int page)
+    public async Task<ServiceResult<List<Chat>>> GetPage(List<string> chatIds, int page)
     {
         try
         {
             var batches = new List<BatchGet<Chat>>();
 
-            for (int i = 0; i < ids.Count; i += DYNAMO_DB_BATCH_GET_ITEM_LIMIT)
+            for (int i = 0; i < chatIds.Count; i += DYNAMO_DB_BATCH_GET_ITEM_LIMIT)
             {
-                List<string> chatIds  = ids.Skip(i).Take(DYNAMO_DB_BATCH_GET_ITEM_LIMIT).ToList();
+                List<string> ids  = chatIds.Skip(i).Take(DYNAMO_DB_BATCH_GET_ITEM_LIMIT).ToList();
                 var batch = _context.CreateBatchGet<Chat>();
-                chatIds.ForEach(batch.AddKey);
+                ids.ForEach(batch.AddKey);
                 batches.Add(batch);
             }
 

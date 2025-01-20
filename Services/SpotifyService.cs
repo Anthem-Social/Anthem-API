@@ -15,7 +15,7 @@ public class SpotifyService
         _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
     }
 
-    public async Task<ServiceResult<string>> GetId(string accessToken)
+    public async Task<ServiceResult<string>> GetUserId(string accessToken)
     {
         try
         {
@@ -32,13 +32,13 @@ public class SpotifyService
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
-            string id = json.GetProperty("id").GetString()!;
+            string userId = json.GetProperty("id").GetString()!;
 
-            return ServiceResult<string>.Success(id);
+            return ServiceResult<string>.Success(userId);
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, "Failed to get id.", "SpotifyService.GetId()");
+            return ServiceResult<string>.Failure(e, "Failed to get UserId.", "SpotifyService.GetUserId()");
         }
     }
 
