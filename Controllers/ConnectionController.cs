@@ -22,22 +22,17 @@ public class ConnectionController
     [HttpPost("chat")]
     public async void CreateChatConnection([FromBody] ChatConnectionCreate connection)
     {
-        Console.WriteLine("Adding Connection " + connection.Id);
-        await _chatConnectionService.AddConnectionId(connection.ChatId, connection.Id);
-    }
-
-    [HttpDelete("chat")]
-    public async void DeleteChatConnection([FromBody] ChatConnectionCreate connection)
-    {
-        Console.WriteLine("Deleting Connection " + connection.Id);
-        await _chatConnectionService.RemoveConnectionId(connection.ChatId, connection.Id);
+        Console.WriteLine("Connected.");
+        Console.WriteLine("ConnectionId: " + connection.ConnectionId);
+        Console.WriteLine("ChatId: " + connection.ChatId);
+        await _chatConnectionService.AddConnectionId(connection.ChatId, connection.ConnectionId);
     }
 
     [HttpPost("status")]
     public async void CreateStatusConnection([FromBody] StatusConnectionCreate connection)
     {
-        Console.WriteLine("Connected");
-        Console.WriteLine("Id: " + connection.Id);
+        Console.WriteLine("Connected.");
+        Console.WriteLine("ConnectionId: " + connection.ConnectionId);
         Console.WriteLine("UserId: " + connection.UserId);
 
         // Load the user
@@ -62,7 +57,7 @@ public class ConnectionController
         List<string> friends = getMutuals.Data.Select(f => f.Follower).ToList();
         
         // Add the Connection Id to each friends' Status Connection list
-        var add = await _statusConnectionService.AddConnectionId(friends, connection.Id);
+        var add = await _statusConnectionService.AddConnectionId(friends, connection.ConnectionId);
         if (add.IsFailure)
             return;
 
