@@ -6,13 +6,11 @@ using AnthemAPI.Models;
 [Route("chats")]
 public class ChatsController
 (
-    ChatConnectionService chatConnectionService,
     ChatService chatService,
     MessageService messageService,
     UserService userService
 ) : ControllerBase
 {
-    private readonly ChatConnectionService _chatConnectionService = chatConnectionService;
     private readonly ChatService _chatService = chatService;
     private readonly MessageService _messageService = messageService;
     private readonly UserService _userService = userService;
@@ -69,22 +67,6 @@ public class ChatsController
             return StatusCode(500);
 
         return NoContent();
-    }
-
-    // [HttpPost("{id}/connection/{connectionId}")]
-    [HttpPost("connect")]
-    public async void CreateConnection([FromBody] ChatConnectionCreate connection)
-    {
-        Console.WriteLine("Adding Connection " + connection.Id);
-        await _chatConnectionService.AddConnectionId(connection.ChatId, connection.Id);
-    }
-
-    // [HttpDelete("{id}/connection/{connectionId}")]
-    [HttpPost("disconnect")]
-    public async void DeleteConnection([FromBody] ChatConnectionCreate connection)
-    {
-        Console.WriteLine("Deleting Connection " + connection.Id);
-        await _chatConnectionService.RemoveConnectionId(connection.ChatId, connection.Id);
     }
 
     [HttpPost("{chatId}/members/{userId}")]
