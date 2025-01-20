@@ -10,6 +10,4 @@ public class Comment
     [DynamoDBRangeKey]
     public required string Id { get; set; } // $"{CreatedAt:o}#{UserId}"
     public required string Text { get; set; }
-    public required string UserId { get; set; }
-    public required DateTime CreatedAt { get; set; }
 }

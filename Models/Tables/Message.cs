@@ -10,8 +10,6 @@ public class Message
     public required string ChatId { get; set; }
     [DynamoDBRangeKey]
     public required string Id { get; set; } // $"{CreatedAt:o}#{UserId}"
-    public required string UserId { get; set; }
-    public required DateTime CreatedAt { get; set; }
     public required ContentType ContentType { get; set; }
     public required string Content { get; set; }
 }
