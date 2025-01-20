@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 public class ConnectionController
 (
     ChatConnectionService chatConnectionService,
-    FollowService followService,
+    FollowerService followerService,
     StatusConnectionService statusConnectionService,
     StatusJobService statusJobService,
     UserService userService
 ) : ControllerBase
 {
     private readonly ChatConnectionService _chatConnectionService = chatConnectionService;
-    private readonly FollowService _followService = followService;
+    private readonly FollowerService _followService = followerService;
     private readonly StatusConnectionService _statusConnectionService = statusConnectionService;
     private readonly StatusJobService _statusJobService = statusJobService;
     private readonly UserService _userService = userService;
@@ -47,14 +47,14 @@ public class ConnectionController
         if (loadAllFollowing.Data is null || loadAllFollowing.IsFailure)
             return;
         
-        List<string> followees = loadAllFollowing.Data.Select(f => f.Followee).ToList();
+        List<string> followees = loadAllFollowing.Data.Select(f => f.UserId).ToList();
 
         // Get those who follow back
         var getMutuals = await _followService.GetMutuals(user.Id, followees);
         if (getMutuals.Data is null || getMutuals.IsFailure)
             return;
 
-        List<string> friends = getMutuals.Data.Select(f => f.Follower).ToList();
+        List<string> friends = getMutuals.Data.Select(f => f.FollowerUserId).ToList();
         
         // Add the Connection Id to each friends' Status Connection list
         var add = await _statusConnectionService.AddConnectionId(friends, connection.ConnectionId);
