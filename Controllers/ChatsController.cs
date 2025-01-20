@@ -46,10 +46,10 @@ public class ChatsController
         return Created();
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> Get(string id)
+    [HttpGet("{chatId}")]
+    public async Task<IActionResult> Get(string chatId)
     {
-        var load = await _chatService.Load(id);
+        var load = await _chatService.Load(chatId);
 
         if (load.IsFailure)
             return StatusCode(500);
@@ -60,10 +60,10 @@ public class ChatsController
         return Ok(load.Data);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    [HttpDelete("{chatId}")]
+    public async Task<IActionResult> Delete(string chatId)
     {
-        var result = await _chatService.Delete(id);
+        var result = await _chatService.Delete(chatId);
         
         if (result.IsFailure)
             return StatusCode(500);
@@ -87,17 +87,17 @@ public class ChatsController
         await _chatConnectionService.RemoveConnectionId(connection.ChatId, connection.Id);
     }
 
-    [HttpPost("{id}/members/{userId}")]
-    public async Task<IActionResult> CreateMember(string id, string userId)
+    [HttpPost("{chatId}/members/{userId}")]
+    public async Task<IActionResult> CreateMember(string chatId, string userId)
     {
         // Load the Chat
-        var loadChat = await _chatService.Load(id);
+        var loadChat = await _chatService.Load(chatId);
 
         if (loadChat.IsFailure)
             return StatusCode(500);
 
         if (loadChat.Data is null)
-            return NotFound($"No Chat with Id: {id}");
+            return NotFound($"No Chat with Id: {chatId}");
 
         // Load the User
         var loadUser = await _userService.Load(userId);
@@ -122,7 +122,7 @@ public class ChatsController
         
         // Add the ChatId to the User's chats list
         User user = loadUser.Data;
-        bool addedChat = user.ChatIds.Add(id);
+        bool addedChat = user.ChatIds.Add(chatId);
         
         if (addedChat) // Save the User
         {
@@ -135,17 +135,17 @@ public class ChatsController
         return Ok(chat);
     }
 
-    [HttpDelete("{id}/members/{userId}")]
-    public async Task<IActionResult> DeleteMember(string id, string userId)
+    [HttpDelete("{chatId}/members/{userId}")]
+    public async Task<IActionResult> DeleteMember(string chatId, string userId)
     {
         // Load the Chat
-        var loadChat = await _chatService.Load(id);
+        var loadChat = await _chatService.Load(chatId);
 
         if (loadChat.IsFailure)
             return StatusCode(500);
 
         if (loadChat.Data is null)
-            return NotFound($"No Chat with Id: {id}");
+            return NotFound($"No Chat with Id: {chatId}");
 
         // Load the User
         var loadUser = await _userService.Load(userId);
@@ -170,7 +170,7 @@ public class ChatsController
         
         // Remove the ChatId from the User's chats list
         User user = loadUser.Data;
-        bool removedChat = user.ChatIds.Remove(id);
+        bool removedChat = user.ChatIds.Remove(chatId);
         
         if (removedChat) // Save the User
         {
@@ -183,17 +183,15 @@ public class ChatsController
         return NoContent();
     }
 
-    [HttpPost("{id}/messages")]
-    public async Task<IActionResult> CreateMessage(string id, [FromBody] MessageCreate dto)
+    [HttpPost("{chatId}/messages")]
+    public async Task<IActionResult> CreateMessage(string chatId, [FromBody] MessageCreate dto)
     {
         // TODO: send to live chatters
         var now = DateTime.UtcNow;
         var message = new Message
         {
-            ChatId = id,
+            ChatId = chatId,
             Id = $"{now:o}#{dto.UserId}",
-            UserId = dto.UserId,
-            CreatedAt = now,
             ContentType = dto.ContentType,
             Content = dto.Content
         };
@@ -204,7 +202,7 @@ public class ChatsController
             return StatusCode(500);
         
         // Update the Chat
-        var update = await _chatService.Update(id, message.CreatedAt, message.Content);
+        var update = await _chatService.Update(chatId, now, message.Content);
 
         if (update.IsFailure)
             return StatusCode(500);
@@ -212,10 +210,10 @@ public class ChatsController
         return Created();
     }
 
-    [HttpGet("{id}/messages")]
-    public async Task<IActionResult> GetMessages(string id, [FromQuery] int page = 1)
+    [HttpGet("{chatId}/messages")]
+    public async Task<IActionResult> GetMessages(string chatId, [FromQuery] int page = 1)
     {
-        var load = await _messageService.LoadBatch(id, page);
+        var load = await _messageService.LoadBatch(chatId, page);
 
         if (load.IsFailure)
             return StatusCode(500);
@@ -223,10 +221,10 @@ public class ChatsController
         return Ok(load.Data);
     }
 
-    [HttpDelete("{id}/messages/{messageId}")]
-    public async Task<IActionResult> DeleteMessage(string id, string messageId)
+    [HttpDelete("{chatId}/messages/{messageId}")]
+    public async Task<IActionResult> DeleteMessage(string chatId, string messageId)
     {
-        var delete = await _messageService.Delete(id, messageId);
+        var delete = await _messageService.Delete(chatId, messageId);
 
         if (delete.Data is null)
             return NotFound();
@@ -237,11 +235,11 @@ public class ChatsController
         return NoContent();
     }
 
-    [HttpPatch("{id}/name")]
-    public async Task<IActionResult> Rename(string id, string name)
+    [HttpPatch("{chatId}/name")]
+    public async Task<IActionResult> Rename(string chatId, string name)
     {
         // Load the Chat
-        var load = await _chatService.Load(id);
+        var load = await _chatService.Load(chatId);
 
         if (load.IsFailure)
             return StatusCode(500);

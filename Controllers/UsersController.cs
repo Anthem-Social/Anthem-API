@@ -10,14 +10,20 @@ public class UsersController
 (
     ChatService chatService,
     FollowService followService,
+    StatusConnectionService statusConnectionService,
+    StatusJobService statusJobService,
+    StatusService statusService,
     UserService userService
 ): ControllerBase
 {
     private readonly ChatService _chatService = chatService;
     private readonly FollowService _followService = followService;
+    private readonly StatusConnectionService _statusConnectionService = statusConnectionService;
+    private readonly StatusJobService _statusJobService = statusJobService;
+    private readonly StatusService _statusService = statusService;
     private readonly UserService _userService = userService;
 
-    [HttpGet("{id}")]
+    [HttpGet("{userId}")]
     public async Task<IActionResult> Get(string id)
     {
         var load = await _userService.Load(id);
@@ -31,13 +37,13 @@ public class UsersController
         return Ok(load.Data);
     }
 
-    [HttpPost("{follower}/follow/{followee}")]
-    public async Task<IActionResult> Follow(string follower, string followee)
+    [HttpPost("{userId}/follower/{followerUserId}")]
+    public async Task<IActionResult> Follow(string userId, string followerUserId)
     {
         var follow = new Follow
         {
-            Followee = followee,
-            Follower = follower,
+            Followee = userId,
+            Follower = followerUserId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -49,10 +55,10 @@ public class UsersController
         return Created();
     }
 
-    [HttpGet("{id}/chats")]
-    public async Task<IActionResult> GetChats(string id, [FromQuery] int page = 1)
+    [HttpGet("{userId}/chats")]
+    public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
     {
-        var loadUser = await _userService.Load(id);
+        var loadUser = await _userService.Load(userId);
 
         if (loadUser.IsFailure)
             return StatusCode(500);
@@ -68,5 +74,21 @@ public class UsersController
             return StatusCode(500);
 
         return Ok(getChats.Data);
+    }
+
+    // [HttpGet("{userId}/posts")]
+
+    [HttpGet("{userId}/status")]
+    public async Task<IActionResult> GetStatus(string userId)
+    {
+        var status = await _statusService.Load(userId);
+
+        if (status.IsFailure)
+            return StatusCode(500);
+
+        if (status.Data is null)
+            return NotFound();
+
+        return Ok(status.Data);
     }
 }
