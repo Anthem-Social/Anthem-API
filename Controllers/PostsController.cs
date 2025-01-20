@@ -12,5 +12,5 @@ public class PostsController: ControllerBase
     // [HttpDelete("{postId}/likes/{likeId}")]
     // [HttpPost("{postId}/comments")]
     // [HttpGet("{postId}/comments")]
-    // [HttpDelete("{postId90-8-}/comments/{commentId}")]
+    // [HttpDelete("{postId}/comments/{commentId}")]
 }
