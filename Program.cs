@@ -21,7 +21,7 @@ builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<ChatConnectionService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<CommentService>();
-builder.Services.AddScoped<FollowService>();
+builder.Services.AddScoped<FollowerService>();
 builder.Services.AddScoped<LikeService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<StatusConnectionService>();
