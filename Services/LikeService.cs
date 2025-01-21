@@ -1,5 +1,6 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
 
@@ -12,6 +13,34 @@ public class LikeService
     public LikeService(IAmazonDynamoDB db)
     {
         _context = new DynamoDBContext(db);
+    }
+
+    public async Task<ServiceResult<Like?>> Load(string userId, string postId)
+    {
+        var query = new QueryOperationConfig
+        {
+            IndexName = "UserId-index",
+            KeyExpression = new Expression
+            {
+                ExpressionStatement = "UserId = :userId AND PostId = :postId",
+                ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
+                {
+                    { ":userId", userId },
+                    { ":postId", postId }
+                }
+            }
+        };
+
+        var search = _context.FromQueryAsync<Like?>(query);
+        var results = await search.GetRemainingAsync();
+
+        if (results.Count == 0)
+            return ServiceResult<Like?>.Success(null);
+
+        if (results.Count > 1)
+            return ServiceResult<Like?>.Failure(null, "More than one result.", "LikeService.Load()");
+        
+        return ServiceResult<Like?>.Success(results[0]);
     }
 
     public async Task<ServiceResult<Like>> Save(Like like)
