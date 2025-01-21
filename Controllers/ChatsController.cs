@@ -193,14 +193,19 @@ public class ChatsController
     }
 
     [HttpGet("{chatId}/messages")]
-    public async Task<IActionResult> GetMessages(string chatId, [FromQuery] int page = 1)
+    public async Task<IActionResult> GetMessages(string chatId, [FromQuery] string? exclusiveStartKey = null)
     {
-        var load = await _messageService.LoadBatch(chatId, page);
+        var load = await _messageService.LoadPage(chatId, exclusiveStartKey);
 
         if (load.IsFailure)
             return StatusCode(500);
         
-        return Ok(load.Data);
+        var data = new {
+            message = load.Data.Item1,
+            lastEvaluatedKey = load.Data.Item2
+        };
+
+        return Ok(data);
     }
 
     [HttpDelete("{chatId}/messages/{messageId}")]
