@@ -5,9 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 public class PostsController: ControllerBase
 {
     // [HttpPost]
+
     // [HttpGet("{postId}")]
+
     // [HttpDelete("{postId}")]
+
     // [HttpPost("{postId}/likes")]
+    
     // [HttpGet("{postId}/likes")]
     // [HttpDelete("{postId}/likes/{likeId}")]
     // [HttpPost("{postId}/comments")]
