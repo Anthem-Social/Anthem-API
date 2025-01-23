@@ -19,15 +19,15 @@ builder.Services.AddScoped<DynamoDBContext>();
 
 builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<ChatConnectionService>();
-builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<ChatsService>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<FollowerService>();
-builder.Services.AddScoped<LikeService>();
-builder.Services.AddScoped<MessageService>();
+builder.Services.AddScoped<LikesService>();
+builder.Services.AddScoped<MessagesService>();
 builder.Services.AddScoped<StatusConnectionService>();
 builder.Services.AddScoped<StatusJobService>();
 builder.Services.AddScoped<StatusService>();
-builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<UsersService>();
 
 builder.Services.AddHttpClient<SpotifyService>();
 builder.Services.AddHttpClient<TokenService>();
