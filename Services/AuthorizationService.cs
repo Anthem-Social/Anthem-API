@@ -24,7 +24,7 @@ public class AuthorizationService
     {
         try
         {
-            var authorization = await _context.LoadAsync<Authorization>(userId);
+            Authorization? authorization = await _context.LoadAsync<Authorization>(userId);
             return ServiceResult<Authorization?>.Success(authorization);
         }
         catch (Exception e)
