@@ -61,20 +61,6 @@ public class LikesService
         }
     }
 
-    public async Task<ServiceResult<List<Like>?>> GetAll(string postId)
-    {
-        try
-        {
-            var search = _context.QueryAsync<Like>(postId);
-            var likes = await search.GetRemainingAsync();
-            return ServiceResult<List<Like>?>.Success(likes);
-        }
-        catch (Exception e)
-        {
-            return ServiceResult<List<Like>?>.Failure(e, $"Failed to get all for {postId}.", "LikesService.GetAll()");
-        }
-    }
-
     public async Task<ServiceResult<bool>> Delete(Like like)
     {
         try
