@@ -6,13 +6,13 @@ using AnthemAPI.Models;
 
 namespace AnthemAPI.Services;
 
-public class UserService
+public class UsersService
 {
     private readonly IAmazonDynamoDB _client;
     private readonly DynamoDBContext _context;
     private const string TABLE_NAME = "Users";
 
-    public UserService(IAmazonDynamoDB client)
+    public UsersService(IAmazonDynamoDB client)
     {
         _client = client;
         _context = new DynamoDBContext(client);
@@ -27,7 +27,7 @@ public class UserService
         }
         catch (Exception e)
         {
-            return ServiceResult<User?>.Failure(e, $"Failed to load for {userId}.", "UserService.Load()");
+            return ServiceResult<User?>.Failure(e, $"Failed to load for {userId}.", "UsersService.Load()");
         }
     }
 
@@ -40,11 +40,11 @@ public class UserService
         }
         catch (Exception e)
         {
-            return ServiceResult<User>.Failure(e, $"Failed to save for {user.Id}.", "UserService.Save()");
+            return ServiceResult<User>.Failure(e, $"Failed to save for {user.Id}.", "UsersService.Save()");
         }
     }
 
-    public async Task<ServiceResult<User?>> AddChatIdToMembers(List<string> userIds, string chatId)
+    public async Task<ServiceResult<User?>> AddChatIdToAll(List<string> userIds, string chatId)
     {
         try
         {
@@ -53,7 +53,7 @@ public class UserService
                 Statements = userIds.Select(userId => new BatchStatementRequest
                 {
                     Statement = $"UPDATE {TABLE_NAME}" +
-                                " SET ChatIds = SET_ADD(ChatIds, ?)" +
+                                " ADD ChatIds ?" +
                                 " WHERE Id = ?",
                     Parameters = new List<AttributeValue>
                     {
@@ -69,7 +69,7 @@ public class UserService
         }
         catch (Exception e)
         {
-            return ServiceResult<User?>.Failure(e, $"Failed to add chat id.", "UserService.AddChatId()");
+            return ServiceResult<User?>.Failure(e, $"Failed to add chat id.", "UsersService.AddChatId()");
         }
     }
 }
