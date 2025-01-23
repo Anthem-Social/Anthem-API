@@ -20,7 +20,7 @@ builder.Services.AddScoped<DynamoDBContext>();
 builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<ChatConnectionService>();
 builder.Services.AddScoped<ChatsService>();
-builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<CommentsService>();
 builder.Services.AddScoped<FollowersService>();
 builder.Services.AddScoped<LikesService>();
 builder.Services.AddScoped<MessagesService>();
