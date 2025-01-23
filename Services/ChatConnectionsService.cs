@@ -4,12 +4,12 @@ using AnthemAPI.Common;
 
 namespace AnthemAPI.Services;
 
-public class ChatConnectionService
+public class ChatConnectionsService
 {
     private readonly IAmazonDynamoDB _client;
     private const string TABLE_NAME = "ChatConnections";
 
-    public ChatConnectionService(IAmazonDynamoDB client)
+    public ChatConnectionsService(IAmazonDynamoDB client)
     {
         _client = client;
     }
@@ -37,7 +37,7 @@ public class ChatConnectionService
 
             var chatConnection = new ChatConnection
             {
-                ChatId = chatId,
+                ChatId = response.Attributes["ChatId"].S,
                 ConnectionIds = response.Attributes["ConnectionIds"].SS.ToHashSet()
             };
 
@@ -45,7 +45,7 @@ public class ChatConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<ChatConnection>.Failure(e, $"Failed to add Connection Id.", "ChatConnectionService.AddConnectionId()");
+            return ServiceResult<ChatConnection>.Failure(e, $"Failed to add connection to {chatId}.", "ChatConnectionsService.AddConnectionId()");
         }
     }
 
@@ -72,7 +72,7 @@ public class ChatConnectionService
 
             var chatConnection = new ChatConnection
             {
-                ChatId = chatId,
+                ChatId = response.Attributes["ChatId"].S,
                 ConnectionIds = response.Attributes["ConnectionIds"].SS.ToHashSet()
             };
 
@@ -80,7 +80,7 @@ public class ChatConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<ChatConnection>.Failure(e, $"Failed to remove from {chatId}.", "ChatConnectionService.RemoveConnectionId()");
+            return ServiceResult<ChatConnection>.Failure(e, $"Failed to remove connection from {chatId}.", "ChatConnectionsService.RemoveConnectionId()");
         }
     }
 }
