@@ -8,21 +8,21 @@ namespace AnthemAPI.Controllers;
 [Route("users")]
 public class UsersController
 (
-    ChatService chatService,
-    FollowerService followerService,
+    ChatsService chatsService,
+    FollowersService followersService,
     StatusService statusService,
-    UserService userService
+    UsersService usersService
 ): ControllerBase
 {
-    private readonly ChatService _chatService = chatService;
-    private readonly FollowerService _followerService = followerService;
+    private readonly ChatsService _chatService = chatsService;
+    private readonly FollowersService _followersService = followersService;
     private readonly StatusService _statusService = statusService;
-    private readonly UserService _userService = userService;
+    private readonly UsersService _usersService = usersService;
 
     [HttpGet("{userId}")]
     public async Task<IActionResult> Get(string id)
     {
-        var load = await _userService.Load(id);
+        var load = await _usersService.Load(id);
 
         if (load.IsFailure)
             return StatusCode(500);
@@ -43,7 +43,7 @@ public class UsersController
             CreatedAt = DateTime.UtcNow
         };
 
-        var save = await _followerService.Save(follower);
+        var save = await _followersService.Save(follower);
 
         if (save.IsFailure)
             return StatusCode(500);
@@ -54,7 +54,7 @@ public class UsersController
     [HttpDelete("{userId}/followers/{followerUserId}")]
     public async Task<IActionResult> DeleteFollower(string userId, string followerUserId)
     {
-        var delete = await _followerService.Delete(userId, followerUserId);
+        var delete = await _followersService.Delete(userId, followerUserId);
 
         if (delete.IsFailure)
             return StatusCode(500);
@@ -63,37 +63,51 @@ public class UsersController
     }
 
     [HttpGet("{userId}/followers")]
-    public async Task<IActionResult> GetFollowers(string userId, [FromQuery] int page = 1)
+    public async Task<IActionResult> GetFollowers(string userId, [FromQuery] string? exclusiveStartKey = null)
     {
-        var load = await _followerService.LoadFollowers(userId, page);
+        // Ensure User exists
+        var loadUser = await _usersService.Load(userId);
 
-        if (load.IsFailure)
+        if (loadUser.IsFailure)
+            return StatusCode(500);
+
+        if (loadUser.Data is null)
+            return NotFound();
+        
+        // Load a page of the users that follow them
+        var loadFollowers = await _followersService.LoadPageFollowers(userId, exclusiveStartKey);
+
+        if (loadFollowers.IsFailure)
             return StatusCode(500);
         
-        if (load.Data is null)
-            return NotFound();
-
-        return Ok(load.Data);
+        return Ok(loadFollowers.Data.Item1);
     }
 
-    [HttpGet("{userId}/following")]
-    public async Task<IActionResult> GetFollowing(string userId, [FromQuery] int page = 1)
+    [HttpGet("{userId}/followings")]
+    public async Task<IActionResult> GetFollowings(string userId, [FromQuery] string? exclusiveStartKey = null)
     {
-        var load = await _followerService.LoadFollowing(userId, page);
+        // Ensure User exists
+        var loadUser = await _usersService.Load(userId);
 
-        if (load.IsFailure)
+        if (loadUser.IsFailure)
             return StatusCode(500);
-        
-        if (load.Data is null)
+
+        if (loadUser.Data is null)
             return NotFound();
 
-        return Ok(load.Data);
+        // Load a page of the users they follow
+        var loadFollowings = await _followersService.LoadPageFollowings(userId, exclusiveStartKey);
+
+        if (loadFollowings.IsFailure)
+            return StatusCode(500);
+
+        return Ok(loadFollowings.Data.Item1);
     }
 
     [HttpGet("{userId}/chats")]
     public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
     {
-        var loadUser = await _userService.Load(userId);
+        var loadUser = await _usersService.Load(userId);
 
         if (loadUser.IsFailure)
             return StatusCode(500);
