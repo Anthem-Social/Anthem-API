@@ -29,9 +29,7 @@ public class SpotifyService
             }
 
             string content = await response.Content.ReadAsStringAsync();
-
             JsonElement json = JsonDocument.Parse(content).RootElement;
-
             string userId = json.GetProperty("id").GetString()!;
 
             return ServiceResult<string>.Success(userId);
@@ -72,18 +70,17 @@ public class SpotifyService
                 return ServiceResult<Status?>.Success(null);
             }
 
-            // Create Album
             JsonElement albumJson = json.GetProperty("item").GetProperty("album"); 
+            JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
 
+            // Create Album
             var album = new Album
             {
                 Uri = albumJson.GetProperty("uri").GetString()!,
                 CoverUrl = albumJson.GetProperty("images")[1].GetProperty("url").GetString()!
             };
 
-            // Create list of Artists
-            JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
-
+            // Create Artists
             var artists = artistsJson
                 .EnumerateArray()
                 .Select(artist => new Artist 

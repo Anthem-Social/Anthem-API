@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 
@@ -7,14 +8,29 @@ namespace AnthemAPI.Services;
 public class ChatConnectionsService
 {
     private readonly IAmazonDynamoDB _client;
+    private readonly DynamoDBContext _context;
     private const string TABLE_NAME = "ChatConnections";
 
     public ChatConnectionsService(IAmazonDynamoDB client)
     {
         _client = client;
+        _context = new DynamoDBContext(client);
     }
 
-    public async Task<ServiceResult<ChatConnection>> AddConnectionId(string chatId, string connectionId)
+    public async Task<ServiceResult<ChatConnection?>> Load(string chatId)
+    {
+        try
+        {
+            ChatConnection? chatConnection = await _context.LoadAsync<ChatConnection>(chatId);
+            return ServiceResult<ChatConnection?>.Success(chatConnection);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<ChatConnection?>.Failure(e, $"Failed to load for {chatId}.", "ChatConnectionsService.Load()");
+        }
+    }
+
+    public async Task<ServiceResult<ChatConnection>> AddConnection(string chatId, string connectionId)
     {
         try
         {
@@ -49,7 +65,7 @@ public class ChatConnectionsService
         }
     }
 
-    public async Task<ServiceResult<ChatConnection>> RemoveConnectionId(string chatId, string connectionId)
+    public async Task<ServiceResult<ChatConnection>> RemoveConnection(string chatId, string connectionId)
     {
         try
         {

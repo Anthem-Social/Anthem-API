@@ -24,9 +24,7 @@ public class StatusJobService
         try
         {
             IScheduler scheduler = await _schedulerFactory.GetScheduler();
-
             bool exists = await scheduler.CheckExists(new JobKey(userId));
-
             return ServiceResult<bool>.Success(exists);
         }
         catch (Exception e)
@@ -72,7 +70,6 @@ public class StatusJobService
         try
         {
             IScheduler scheduler = await _schedulerFactory.GetScheduler();
-
             await scheduler.UnscheduleJob(new TriggerKey(userId, pollingGroup));
 
             Console.WriteLine("Unscheduled " + userId + " " + pollingGroup);
@@ -126,21 +123,21 @@ public class StatusJobService
 
 public class EmitStatus : IJob
 {
-    private readonly AuthorizationService _authorizationService;
+    private readonly AuthorizationsService _authorizationsService;
     private readonly IAmazonApiGatewayManagementApi _client;
-    private readonly StatusJobService _jobService;
+    private readonly StatusJobService _statusJobService;
     private readonly SpotifyService _spotifyService;
-    private readonly StatusConnectionService _statusConnectionService;
-    private readonly StatusService _statusService;
+    private readonly StatusConnectionsService _statusConnectionsService;
+    private readonly StatusesService _statusesService;
     private readonly TokenService _tokenService;
 
     public EmitStatus(
-        AuthorizationService authorizationService,
+        AuthorizationsService authorizationsService,
         IConfiguration configuration,
-        StatusJobService jobService,
+        StatusJobService statusJobService,
         SpotifyService spotifyService,
-        StatusConnectionService statusConnectionService,
-        StatusService statusService,
+        StatusConnectionsService statusConnectionsService,
+        StatusesService statusesService,
         TokenService tokenService
     )
     {
@@ -149,11 +146,11 @@ public class EmitStatus : IJob
             ServiceURL = configuration["StatusApiGatewayUrl"]
         };
         _client = new AmazonApiGatewayManagementApiClient(config);
-        _authorizationService = authorizationService;
-        _jobService = jobService;
+        _authorizationsService = authorizationsService;
+        _statusJobService = statusJobService;
         _spotifyService = spotifyService;
-        _statusConnectionService = statusConnectionService;
-        _statusService = statusService;
+        _statusConnectionsService = statusConnectionsService;
+        _statusesService = statusesService;
         _tokenService = tokenService;
     }
 
@@ -165,7 +162,7 @@ public class EmitStatus : IJob
         try
         {
             // Get the user's authorization
-            var auth = await _authorizationService.Load(userId);
+            var auth = await _authorizationsService.Load(userId);
 
             if (auth.Data is null || auth.IsFailure)
                 throw new Exception(auth.ErrorMessage);
@@ -182,7 +179,7 @@ public class EmitStatus : IJob
 
                 string complete = Helpers.AddRefreshTokenProperty(refresh.Data, authorization.RefreshToken);
                 JsonElement element = JsonDocument.Parse(complete).RootElement;
-                var save = await _authorizationService.Save(element);
+                var save = await _authorizationsService.Save(element);
 
                 if (save.Data is null || save.IsFailure)
                     throw new Exception(save.ErrorMessage);
@@ -191,7 +188,7 @@ public class EmitStatus : IJob
             }
 
             // Get the user's status connections
-            var connections = await _statusConnectionService.Load(userId);
+            var connections = await _statusConnectionsService.Load(userId);
 
             if (connections.Data is null || connections.IsFailure)
                 throw new Exception(connections.ErrorMessage);
@@ -214,7 +211,7 @@ public class EmitStatus : IJob
             {
                 if (pollingGroup == Active.Group)
                 {
-                    await _jobService.SetPollingTier(userId, Reduced);
+                    await _statusJobService.SetPollingTier(userId, Reduced);
                 }
 
                 return;
@@ -223,11 +220,11 @@ public class EmitStatus : IJob
             // If we have a status, ensure we set the PollingTier to Active
             if (pollingGroup == Reduced.Group)
             {
-                await _jobService.SetPollingTier(userId, Active);
+                await _statusJobService.SetPollingTier(userId, Active);
             }
 
             // Save the user's status
-            var saveStatus = await _statusService.Save(status);
+            var saveStatus = await _statusesService.Save(status);
 
             if (saveStatus.Data is null || saveStatus.IsFailure)
                 throw new Exception(saveStatus.ErrorMessage);
@@ -265,7 +262,7 @@ public class EmitStatus : IJob
             // Remove all connections that are gone
             if (gone.Count > 0)
             {
-                var remove = await _statusConnectionService.RemoveConnectionIds(userId, gone);
+                var remove = await _statusConnectionsService.RemoveConnections(userId, gone);
 
                 if (remove.IsFailure)
                     throw new Exception(remove.ErrorMessage);
@@ -275,15 +272,15 @@ public class EmitStatus : IJob
                 // Unschedule the job if there are no more connections
                 if (count == 0)
                 {
-                    await _jobService.Unschedule(userId, pollingGroup);
+                    await _statusJobService.Unschedule(userId, pollingGroup);
                 }
             }
         }
         catch (Exception e)
         {
             Console.WriteLine($"Emit status job failed.\n{e.StackTrace}");
-            await _jobService.Unschedule(userId, pollingGroup);
-            await _statusConnectionService.Clear(userId);
+            await _statusJobService.Unschedule(userId, pollingGroup);
+            await _statusConnectionsService.Clear(userId);
         }
     }
 }

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
@@ -26,7 +25,7 @@ public class ChatsService
     {
         try
         {
-            var chat = await _context.LoadAsync<Chat?>(chatId);
+            Chat? chat = await _context.LoadAsync<Chat>(chatId);
             return ServiceResult<Chat?>.Success(chat);
         }
         catch (Exception e)
@@ -52,14 +51,8 @@ public class ChatsService
     {
         try
         {
-            var load = await Load(chatId);
-
-            if (load.IsFailure || load.Data is null)
-                return load;
-            
-            await _context.DeleteAsync(load.Data);
-
-            return ServiceResult<Chat?>.Success(load.Data);
+            await _context.DeleteAsync<Chat>(chatId);
+            return ServiceResult<Chat?>.Success(null);
         }
         catch (Exception e)
         {
@@ -84,7 +77,7 @@ public class ChatsService
                     [":preview"] = new AttributeValue { S = preview },
                     [":lastMessageAt"] = new AttributeValue { S = lastMessageAt.ToString("o") }
                 },
-                ReturnValues = ReturnValue.UPDATED_NEW
+                ReturnValues = ReturnValue.ALL_NEW
             };
 
             var response = await _client.UpdateItemAsync(update);
@@ -108,7 +101,7 @@ public class ChatsService
         }
     }
 
-    public async Task<ServiceResult<List<Chat>>> GetPage(List<string> chatIds, int page)
+    public async Task<ServiceResult<List<Chat>>> LoadPage(List<string> chatIds, int page)
     {
         try
         {
@@ -124,7 +117,7 @@ public class ChatsService
 
             await _context.ExecuteBatchGetAsync(batches.ToArray());
 
-            var chats = batches
+            List<Chat> chats = batches
                 .SelectMany(b => b.Results)
                 .OrderByDescending(c => c.LastMessageAt)
                 .Skip(page > 1 ? (page - 1) * PAGE_LIMIT : 0)
@@ -135,7 +128,7 @@ public class ChatsService
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Chat>>.Failure(e, "Failed to get page.", "ChatsService.GetPage()");
+            return ServiceResult<List<Chat>>.Failure(e, "Failed to get page.", "ChatsService.LoadPage()");
         }
     }
 }

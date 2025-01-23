@@ -13,8 +13,12 @@ public class PostsController: ControllerBase
     // [HttpPost("{postId}/likes")]
     
     // [HttpGet("{postId}/likes")]
+
     // [HttpDelete("{postId}/likes/{likeId}")]
+
     // [HttpPost("{postId}/comments")]
+
     // [HttpGet("{postId}/comments")]
+    
     // [HttpDelete("{postId}/comments/{commentId}")]
 }

@@ -9,11 +9,11 @@ namespace AnthemAPI.Controllers;
 [Route("token")]
 public class TokenController
 (
-    AuthorizationService authorizationService,
+    AuthorizationsService authorizationsService,
     TokenService tokenService
 ) : ControllerBase
 {
-    private readonly AuthorizationService _authorizationService = authorizationService;
+    private readonly AuthorizationsService _authorizationsService = authorizationsService;
     private readonly TokenService _tokenService = tokenService;
 
     [HttpPost("swap")]
@@ -25,7 +25,7 @@ public class TokenController
 
         JsonElement element = JsonDocument.Parse(swap.Data!).RootElement;
 
-        var save = await _authorizationService.Save(element);
+        var save = await _authorizationsService.Save(element);
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);
 
@@ -42,7 +42,7 @@ public class TokenController
         string complete = Helpers.AddRefreshTokenProperty(refresh.Data, refreshToken);
         JsonElement element = JsonDocument.Parse(complete).RootElement;
 
-        var save = await _authorizationService.Save(element);
+        var save = await _authorizationsService.Save(element);
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);
 

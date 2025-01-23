@@ -10,13 +10,13 @@ public class UsersController
 (
     ChatsService chatsService,
     FollowersService followersService,
-    StatusService statusService,
+    StatusesService statusesService,
     UsersService usersService
 ): ControllerBase
 {
-    private readonly ChatsService _chatService = chatsService;
+    private readonly ChatsService _chatsService = chatsService;
     private readonly FollowersService _followersService = followersService;
-    private readonly StatusService _statusService = statusService;
+    private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
 
     [HttpGet("{userId}")]
@@ -117,7 +117,7 @@ public class UsersController
         
         List<string> chatIds = loadUser.Data.ChatIds.ToList();
 
-        var getChats = await _chatService.GetPage(chatIds, page);
+        var getChats = await _chatsService.LoadPage(chatIds, page);
 
         if (getChats.IsFailure)
             return StatusCode(500);
@@ -130,7 +130,7 @@ public class UsersController
     [HttpGet("{userId}/status")]
     public async Task<IActionResult> GetStatus(string userId)
     {
-        var status = await _statusService.Load(userId);
+        var status = await _statusesService.Load(userId);
 
         if (status.IsFailure)
             return StatusCode(500);

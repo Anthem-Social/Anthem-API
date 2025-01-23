@@ -6,18 +6,18 @@ using AnthemAPI.Models;
 
 namespace AnthemAPI.Services;
 
-public class AuthorizationService
+public class AuthorizationsService
 {
     private readonly DynamoDBContext _context;
     private readonly SpotifyService _spotifyService;
 
-    public AuthorizationService(
-        IAmazonDynamoDB db,
+    public AuthorizationsService(
+        IAmazonDynamoDB client,
         SpotifyService spotifyService
     )
     {
         _spotifyService = spotifyService;
-        _context = new DynamoDBContext(db);
+        _context = new DynamoDBContext(client);
     }
 
     public async Task<ServiceResult<Authorization?>> Load(string userId)
@@ -29,7 +29,7 @@ public class AuthorizationService
         }
         catch (Exception e)
         {
-            return ServiceResult<Authorization?>.Failure(e, $"Failed to load for {userId}.", "AuthorizationService.Load()");
+            return ServiceResult<Authorization?>.Failure(e, $"Failed to load for {userId}.", "AuthorizationsService.Load()");
         }
     }
 
@@ -42,7 +42,7 @@ public class AuthorizationService
         }
         catch (Exception e)
         {
-            return ServiceResult<Authorization>.Failure(e, $"Failed to save for {authorization.UserId}.", "AuthorizationService.Save()");
+            return ServiceResult<Authorization>.Failure(e, $"Failed to save for {authorization.UserId}.", "AuthorizationsService.Save()");
         }
     }
 
@@ -58,7 +58,7 @@ public class AuthorizationService
 
             if (result.Data is null || result.IsFailure)
             {
-                return ServiceResult<Authorization>.Failure(null, "Failed to get userId.", "AuthorizationService.Save(json)");
+                return ServiceResult<Authorization>.Failure(null, "Failed to get userId.", "AuthorizationsService.Save(json)");
             }
 
             string userId = result.Data!;
@@ -74,7 +74,7 @@ public class AuthorizationService
         }
         catch (Exception e)
         {
-            return ServiceResult<Authorization>.Failure(e, "Failed to save.", "AuthorizationService.Save(json)");
+            return ServiceResult<Authorization>.Failure(e, "Failed to save.", "AuthorizationsService.Save(json)");
         }
     }
 }

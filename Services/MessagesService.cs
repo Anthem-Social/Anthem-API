@@ -36,12 +36,8 @@ public class MessagesService
     {
         try
         {
-            var message = await _context.LoadAsync<Message>(chatId, messageId);
-
-            if (message is not null)
-                await _context.DeleteAsync(message);
-            
-            return ServiceResult<Message?>.Success(message);
+            await _context.DeleteAsync<Message>(chatId, messageId);
+            return ServiceResult<Message?>.Success(null);
         }
         catch (Exception e)
         {

@@ -37,12 +37,8 @@ public class FollowersService
     {
         try
         {
-            var follower = await _context.LoadAsync<Follower>(userId, followerUserId);
-
-            if (follower is not null)
-                await _context.DeleteAsync(follower);
-            
-            return ServiceResult<Follower?>.Success(follower);
+            await _context.DeleteAsync<Follower>(userId, followerUserId);
+            return ServiceResult<Follower?>.Success(null);
         }
         catch (Exception e)
         {
@@ -85,8 +81,8 @@ public class FollowersService
                 })
                 .ToList();
 
-            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("Id")
-                ? response.LastEvaluatedKey["Id"].S
+            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("FollowerUserId")
+                ? response.LastEvaluatedKey["FollowerUserId"].S
                 : null;
 
             return ServiceResult<(List<Follower>, string?)>.Success((followers, lastEvaluatedKey));
@@ -133,8 +129,8 @@ public class FollowersService
                 })
                 .ToList();
 
-            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("Id")
-                ? response.LastEvaluatedKey["Id"].S
+            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("UserId")
+                ? response.LastEvaluatedKey["UserId"].S
                 : null;
 
             return ServiceResult<(List<Follower>, string?)>.Success((followings, lastEvaluatedKey));

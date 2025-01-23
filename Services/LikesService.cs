@@ -36,7 +36,7 @@ public class LikesService
             }
         };
 
-        var search = _context.FromQueryAsync<Like?>(query);
+        var search = _context.FromQueryAsync<Like>(query);
         var results = await search.GetRemainingAsync();
 
         if (results.Count == 0)

@@ -6,16 +6,16 @@ using Microsoft.AspNetCore.Mvc;
 [Route("connection")]
 public class ConnectionController
 (
-    ChatConnectionService chatConnectionService,
+    ChatConnectionsService chatConnectionsService,
     FollowersService followersService,
-    StatusConnectionService statusConnectionService,
+    StatusConnectionsService statusConnectionsService,
     StatusJobService statusJobService,
     UsersService usersService
 ) : ControllerBase
 {
-    private readonly ChatConnectionService _chatConnectionService = chatConnectionService;
+    private readonly ChatConnectionsService _chatConnectionsService = chatConnectionsService;
     private readonly FollowersService _followersService = followersService;
-    private readonly StatusConnectionService _statusConnectionService = statusConnectionService;
+    private readonly StatusConnectionsService _statusConnectionsService = statusConnectionsService;
     private readonly StatusJobService _statusJobService = statusJobService;
     private readonly UsersService _usersService = usersService;
 
@@ -25,7 +25,7 @@ public class ConnectionController
         Console.WriteLine("Connected.");
         Console.WriteLine("ConnectionId: " + connection.ConnectionId);
         Console.WriteLine("ChatId: " + connection.ChatId);
-        await _chatConnectionService.AddConnectionId(connection.ChatId, connection.ConnectionId);
+        await _chatConnectionsService.AddConnection(connection.ChatId, connection.ConnectionId);
     }
 
     [HttpPost("status")]
@@ -57,7 +57,7 @@ public class ConnectionController
         List<string> friends = loadFriends.Data.Select(f => f.FollowerUserId).ToList();
         
         // Add the Connection Id to each friends' Status Connection list
-        var add = await _statusConnectionService.AddConnectionId(friends, connection.ConnectionId);
+        var add = await _statusConnectionsService.AddConnectionToAll(friends, connection.ConnectionId);
         if (add.IsFailure)
             return;
 

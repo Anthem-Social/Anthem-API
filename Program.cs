@@ -17,17 +17,17 @@ builder.Services.AddScoped<DynamoDBContext>();
 
 // builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddScoped<AuthorizationService>();
-builder.Services.AddScoped<ChatConnectionService>();
+builder.Services.AddScoped<AuthorizationsService>();
+builder.Services.AddScoped<ChatConnectionsService>();
 builder.Services.AddScoped<ChatsService>();
 builder.Services.AddScoped<CommentsService>();
 builder.Services.AddScoped<FollowersService>();
 builder.Services.AddScoped<LikesService>();
 builder.Services.AddScoped<MessagesService>();
 builder.Services.AddScoped<PostsService>();
-builder.Services.AddScoped<StatusConnectionService>();
+builder.Services.AddScoped<StatusConnectionsService>();
+builder.Services.AddScoped<StatusesService>();
 builder.Services.AddScoped<StatusJobService>();
-builder.Services.AddScoped<StatusService>();
 builder.Services.AddScoped<UsersService>();
 
 builder.Services.AddHttpClient<SpotifyService>();

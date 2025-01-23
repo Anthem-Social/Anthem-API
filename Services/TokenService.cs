@@ -14,7 +14,6 @@ public class TokenService
     public TokenService(HttpClient client, IConfiguration configuration)
     {
         _configuration = configuration;
-        
         var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_configuration["SpotifyClientId"]}:{_configuration["SpotifyClientSecret"]}"));
         _client = client;
         _client.BaseAddress = new Uri("https://accounts.spotify.com/api/token");
@@ -81,7 +80,7 @@ public class TokenService
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, "Failed to refresh token.", "TokenService.Refresh()");
+            return ServiceResult<string>.Failure(e, "Failed to refresh.", "TokenService.Refresh()");
         }
     }
 }

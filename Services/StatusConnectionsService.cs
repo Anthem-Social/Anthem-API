@@ -6,15 +6,14 @@ using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
-public class StatusConnectionService
+public class StatusConnectionsService
 {
     private readonly IAmazonDynamoDB _client;
     private readonly DynamoDBContext _context;
     private const string TABLE_NAME = "StatusConnections";
 
-    public StatusConnectionService(IAmazonDynamoDB client)
+    public StatusConnectionsService(IAmazonDynamoDB client)
     {
-
         _client = client;
         _context = new DynamoDBContext(_client);
     }
@@ -23,12 +22,12 @@ public class StatusConnectionService
     {
         try
         {
-            var statusConnection = await _context.LoadAsync<StatusConnection>(userId);
+            StatusConnection? statusConnection = await _context.LoadAsync<StatusConnection>(userId);
             return ServiceResult<StatusConnection?>.Success(statusConnection);
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to load for {userId}.", "StatusConnectionService.Load()");
+            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to load for {userId}.", "StatusConnectionsService.Load()");
         }
     }
 
@@ -41,7 +40,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection>.Failure(e, $"Failed to save for {statusConnection.UserId}.", "StatusConnectionService.Save()");
+            return ServiceResult<StatusConnection>.Failure(e, $"Failed to save for {statusConnection.UserId}.", "StatusConnectionsService.Save()");
         }
     }
 
@@ -59,11 +58,11 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection>.Failure(e, $"Failed to clear for {userId}.", "StatusConnectionService.Clear()");
+            return ServiceResult<StatusConnection>.Failure(e, $"Failed to clear for {userId}.", "StatusConnectionsService.Clear()");
         }
     }
 
-    public async Task<ServiceResult<StatusConnection?>> AddConnectionId(List<string> userIds, string connectionId)
+    public async Task<ServiceResult<StatusConnection?>> AddConnectionToAll(List<string> userIds, string connectionId)
     {
         try
         {
@@ -72,13 +71,12 @@ public class StatusConnectionService
             for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT)
             {
                 var ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT).ToList();
-
                 var batch = new BatchExecuteStatementRequest
                 {
                     Statements = ids.Select(userId => new BatchStatementRequest
                     {
                         Statement = $"UPDATE {TABLE_NAME}" +
-                                    " SET ConnectionIds = SET_ADD(ConnectionIds, ?)" +
+                                    " ADD ConnectionIds ?" +
                                     " WHERE UserId = ?",
                         Parameters = new List<AttributeValue>
                         {
@@ -97,11 +95,11 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to add connection id {connectionId}.", "StatusConnectionService.AddConnectionId()");
+            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to add connection {connectionId}.", "StatusConnectionsService.AddConnection()");
         }
     }
 
-    public async Task<ServiceResult<int>> RemoveConnectionIds(string userId, List<string> connectionIds)
+    public async Task<ServiceResult<int>> RemoveConnections(string userId, List<string> connectionIds)
     {
         try
         {
@@ -132,7 +130,7 @@ public class StatusConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<int>.Failure(e, $"Failed to remove connection ids for {userId}.", "StatusConnectionService.RemoveConnectionIds()");
+            return ServiceResult<int>.Failure(e, $"Failed to remove connections for {userId}.", "StatusConnectionsService.RemoveConnections()");
         }
     }
 }
