@@ -1,18 +1,23 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
+using AnthemAPI.Common.Helpers;
 using AnthemAPI.Models;
-using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
-public class FollowerService
+public class FollowersService
 {
+    private readonly IAmazonDynamoDB _client;
     private readonly DynamoDBContext _context;
-    public FollowerService(IAmazonDynamoDB db)
+    private const int PAGE_LIMIT = 20;
+    private const string TABLE_NAME = "Followers";
+
+    public FollowersService(IAmazonDynamoDB client)
     {
-        _context = new DynamoDBContext(db);
+        _client = client;
+        _context = new DynamoDBContext(client);
     }
 
     public async Task<ServiceResult<Follower>> Save(Follower follower)
@@ -24,7 +29,7 @@ public class FollowerService
         }
         catch (Exception e)
         {
-            return ServiceResult<Follower>.Failure(e, $"Failed to save for {follower.UserId} and {follower.FollowerUserId}.", "FollowerService.Save()");
+            return ServiceResult<Follower>.Failure(e, $"Failed to save for {follower.UserId} and {follower.FollowerUserId}.", "FollowersService.Save()");
         }
     }
 
@@ -41,113 +46,137 @@ public class FollowerService
         }
         catch (Exception e)
         {
-            return ServiceResult<Follower?>.Failure(e, $"Failed to delete for {userId} and {followerUserId}.", "FollowerService.Delete()");
+            return ServiceResult<Follower?>.Failure(e, $"Failed to delete for {userId} and {followerUserId}.", "FollowersService.Delete()");
         }
     }
 
-    public async Task<ServiceResult<List<Follower>?>> LoadFollowers(string userId, int page)
+    public async Task<ServiceResult<(List<Follower>, string?)>> LoadPageFollowers(string userId, string? exclusiveStartKey = null)
     {
         try
         {
-            var query = new QueryOperationConfig
+            var request = new QueryRequest
             {
-                KeyExpression = new Expression
+                TableName = TABLE_NAME,
+                KeyConditionExpression = "UserId = :userId",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    ExpressionStatement = "UserId = :userId",
-                    ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
-                    {
-                        { ":userId", userId }
-                    }
+                    [":userId"] = new AttributeValue { S = userId }
                 },
-                Limit = FOLLOW_BATCH_LIMIT
+                Limit = PAGE_LIMIT
             };
 
-            var search = _context.FromQueryAsync<Follower>(query);
-
-            var followers = new List<Follower>();
-
-            for (int x = 0; x < page; x++)
+            if (exclusiveStartKey is not null)
             {
-                followers = await search.GetNextSetAsync();
+                request.ExclusiveStartKey = new Dictionary<string, AttributeValue>
+                {
+                    ["UserId"] = new AttributeValue { S = userId },
+                    ["FollowerUserId"] = new AttributeValue { S = exclusiveStartKey }
+                };
             }
+            
+            var response = await _client.QueryAsync(request);
 
-            return ServiceResult<List<Follower>?>.Success(followers);
+            List<Follower> followers = response.Items
+                .Select(follower => new Follower
+                {
+                    UserId = follower["UserId"].S,
+                    FollowerUserId = follower["FollowerUserId"].S,
+                    CreatedAt = Helpers.ToDateTimeUTC(follower["CreatedAt"].S)
+                })
+                .ToList();
+
+            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("Id")
+                ? response.LastEvaluatedKey["Id"].S
+                : null;
+
+            return ServiceResult<(List<Follower>, string?)>.Success((followers, lastEvaluatedKey));
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Follower>?>.Failure(e, $"Failed to load for {userId}.", "FollowerService.LoadFollowers()");
+            return ServiceResult<(List<Follower>, string?)>.Failure(e, $"Failed to load page for {userId}.", "FollowersService.LoadPageFollowers()");
         }
     }
 
-    public async Task<ServiceResult<List<Follower>?>> LoadFollowing(string followerUserId, int page)
+    public async Task<ServiceResult<(List<Follower>, string?)>> LoadPageFollowings(string followerUserId, string? exclusiveStartKey = null)
     {
         try
         {
-            var query = new QueryOperationConfig
+            var request = new QueryRequest
             {
+                TableName = TABLE_NAME,
                 IndexName = "Follower-index",
-                KeyExpression = new Expression
+                KeyConditionExpression = "FollowerUserId = :followerUserId",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    ExpressionStatement = "FollowerUserId = :followerUserId",
-                    ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
-                    {
-                        { ":followerUserId", followerUserId }
-                    }
+                    [":followerUserId"] = new AttributeValue { S = followerUserId }
                 },
-                Limit = FOLLOW_BATCH_LIMIT
+                Limit = PAGE_LIMIT
             };
 
-            var search = _context.FromQueryAsync<Follower>(query);
-
-            var following = new List<Follower>();
-
-            for (int x = 0; x < page; x++)
+            if (exclusiveStartKey is not null)
             {
-                following = await search.GetNextSetAsync();
+                request.ExclusiveStartKey = new Dictionary<string, AttributeValue>
+                {
+                    ["FollowerUserId"] = new AttributeValue { S = followerUserId },
+                    ["UserId"] = new AttributeValue { S = exclusiveStartKey }
+                };
             }
+            
+            var response = await _client.QueryAsync(request);
 
-            return ServiceResult<List<Follower>?>.Success(following);
+            List<Follower> followings = response.Items
+                .Select(following => new Follower
+                {
+                    UserId = following["UserId"].S,
+                    FollowerUserId = following["FollowerUserId"].S,
+                    CreatedAt = Helpers.ToDateTimeUTC(following["CreatedAt"].S)
+                })
+                .ToList();
+
+            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("Id")
+                ? response.LastEvaluatedKey["Id"].S
+                : null;
+
+            return ServiceResult<(List<Follower>, string?)>.Success((followings, lastEvaluatedKey));
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Follower>?>.Failure(e, $"Failed to load for {followerUserId}.", "FollowerService.LoadFollowing()");
+            return ServiceResult<(List<Follower>, string?)>.Failure(e, $"Failed to load page for {followerUserId}.", "FollowersService.LoadPageFollowings()");
         }
     }
 
-    public async Task<ServiceResult<List<Follower>?>> LoadAllFollowing(string followerUserId)
+    public async Task<ServiceResult<List<Follower>>> LoadAllFollowings(string followerUserId)
     {
         try
         {
-            int page = 1;
-            var following = new List<Follower>();
+            string? exclusiveStartKey = null;
+            var followings = new List<Follower>();
 
             while (true)
             {
-                var load = await LoadFollowing(followerUserId, page);
+                var load = await LoadPageFollowings(followerUserId, exclusiveStartKey);
 
                 if (load.IsFailure)
-                    return load;
-
-                if (load.Data is null)
-                    break;
+                    return ServiceResult<List<Follower>>.Failure(load.Exception, load.ErrorMessage!, load.ErrorOrigin!);
+                
+                List<Follower> followingsPage = load.Data.Item1;
+                exclusiveStartKey = load.Data.Item2;
                                 
-                following.AddRange(load.Data);
+                followings.AddRange(followingsPage);
 
-                if (load.Data.Count != FOLLOW_BATCH_LIMIT)
+                if (exclusiveStartKey is null)
                     break;
-
-                page++;
             }
 
-            return ServiceResult<List<Follower>?>.Success(following);
+            return ServiceResult<List<Follower>>.Success(followings);
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Follower>?>.Failure(e, $"Failed to load for {followerUserId}.", "FollowerService.LoadAllFollowing()");
+            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {followerUserId}.", "FollowersService.LoadAllFollowings()");
         }
     }
 
-    public async Task<ServiceResult<List<Follower>>> GetMutuals(string followerUserId, List<string> followees)
+    public async Task<ServiceResult<List<Follower>>> LoadFriends(string followerUserId, List<string> followees)
     {
         try
         {
@@ -158,7 +187,7 @@ public class FollowerService
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Follower>>.Failure(e, "Failed to load batch.", "FollowerService.LoadFriendsBatch()");
+            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {followerUserId}.", "FollowersService.LoadFriends()");
         }
     }
 }
