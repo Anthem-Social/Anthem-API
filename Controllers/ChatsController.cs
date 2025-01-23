@@ -197,6 +197,7 @@ public class ChatsController
     [HttpGet("{chatId}/messages")]
     public async Task<IActionResult> GetMessages(string chatId, [FromQuery] string? exclusiveStartKey = null)
     {
+        // TODO: Check if chat exists, 404
         var load = await _messagesService.LoadPage(chatId, exclusiveStartKey);
 
         if (load.IsFailure)

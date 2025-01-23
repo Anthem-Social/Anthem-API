@@ -80,7 +80,7 @@ public class ChatConnectionService
         }
         catch (Exception e)
         {
-            return ServiceResult<ChatConnection>.Failure(e, $"Failed to remove Connection Id.", "ChatConnectionService.RemoveConnectionId()");
+            return ServiceResult<ChatConnection>.Failure(e, $"Failed to remove from {chatId}.", "ChatConnectionService.RemoveConnectionId()");
         }
     }
 }
