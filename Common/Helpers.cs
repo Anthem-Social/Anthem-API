@@ -1,7 +1,7 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Common.Helpers;
 
@@ -59,17 +59,16 @@ public static class Helpers
         }
     }
 
-    public static int CalculatePaginationToken(int page, int pageSize)
-    {
-        var skip = (page - 1) * pageSize;
-        return skip;
-    }
-
     public static string AddRefreshTokenProperty(string json, string refreshToken)
     {
         var document = JsonDocument.Parse(json);
         var dictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(document.RootElement)!;
         dictionary["refresh_token"] = refreshToken;
         return JsonSerializer.Serialize(dictionary);
+    }
+
+    public static DateTime ToDateTimeUTC(string iso8601)
+    {
+        return DateTime.Parse(iso8601, null, DateTimeStyles.AssumeUniversal);
     }
 }
