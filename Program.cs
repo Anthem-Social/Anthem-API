@@ -24,6 +24,7 @@ builder.Services.AddScoped<CommentsService>();
 builder.Services.AddScoped<FollowersService>();
 builder.Services.AddScoped<LikesService>();
 builder.Services.AddScoped<MessagesService>();
+builder.Services.AddScoped<PostsService>();
 builder.Services.AddScoped<StatusConnectionService>();
 builder.Services.AddScoped<StatusJobService>();
 builder.Services.AddScoped<StatusService>();

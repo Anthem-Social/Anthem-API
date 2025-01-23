@@ -1,6 +1,5 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
@@ -23,34 +22,13 @@ public class PostsService
     {
         try
         {
-            var query = new QueryOperationConfig
-            {
-                IndexName = "Id-index",
-                KeyExpression = new Expression
-                {
-                    ExpressionStatement = "Id = :id",
-                    ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
-                    {
-                        {":id", postId}
-                    }
-                }
-            };
-
-            var search = _context.FromQueryAsync<Post?>(query);
-
-            var results = await search.GetRemainingAsync();
-
-            if (results.Count == 0)
-                return ServiceResult<Post?>.Success(null);
-
-            if (results.Count > 1)
-                return ServiceResult<Post?>.Failure(null, "More than one result.", "PostServcie.Load()");
-
-            return ServiceResult<Post?>.Success(results[0]);
+            string userId = postId.Split("#")[1];
+            Post? post = await _context.LoadAsync<Post?>(userId, postId);
+            return ServiceResult<Post?>.Success(post);
         }
         catch (Exception e)
         {
-            return ServiceResult<Post?>.Failure(e, $"Failed to load {postId}.", "PostService.Load()");
+            return ServiceResult<Post?>.Failure(e, $"Failed to load {postId}.", "PostsService.Load()");
         }
     }
 
@@ -63,7 +41,7 @@ public class PostsService
         }
         catch (Exception e)
         {
-            return ServiceResult<Post>.Failure(e, $"Failed to save {post.Id}.", "PostService.Save()");
+            return ServiceResult<Post>.Failure(e, $"Failed to save {post.Id}.", "PostsService.Save()");
         }
     }
 
@@ -71,21 +49,13 @@ public class PostsService
     {
         try
         {
-            var load = await Load(postId);
-
-            if (load.IsFailure)
-                return load;
-
-            if (load.Data is null)
-                return ServiceResult<Post?>.Success(null);
-            
-            await _context.DeleteAsync(load.Data);
-
-            return ServiceResult<Post?>.Success(load.Data);
+            string userId = postId.Split("#")[1];
+            await _context.DeleteAsync<Post>(userId, postId);
+            return ServiceResult<Post?>.Success(null);
         }
         catch (Exception e)
         {
-            return ServiceResult<Post?>.Failure(e, $"Failed to delete {postId}.", "PostService.Delete()");
+            return ServiceResult<Post?>.Failure(e, $"Failed to delete {postId}.", "PostsService.Delete()");
         }
     }
 
@@ -93,7 +63,7 @@ public class PostsService
     {
         try
         {
-            var userId = postId.Split("#")[1];
+            string userId = postId.Split("#")[1];
             var request = new UpdateItemRequest
             {
                 TableName = TABLE_NAME,
@@ -116,7 +86,7 @@ public class PostsService
         }
         catch (Exception e)
         {
-            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostService.IncrementTotalLikes()");
+            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostsService.IncrementTotalLikes()");
         }
     }
 
@@ -124,7 +94,7 @@ public class PostsService
     {
         try
         {
-            var userId = postId.Split("#")[1];
+            string userId = postId.Split("#")[1];
             var request = new UpdateItemRequest
             {
                 TableName = TABLE_NAME,
@@ -147,7 +117,7 @@ public class PostsService
         }
         catch (Exception e)
         {
-            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostService.DecrementTotalLikes()");
+            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostsService.DecrementTotalLikes()");
         }
     }
 
@@ -155,7 +125,7 @@ public class PostsService
     {
         try
         {
-            var userId = postId.Split("#")[1];
+            string userId = postId.Split("#")[1];
             var request = new UpdateItemRequest
             {
                 TableName = TABLE_NAME,
@@ -178,7 +148,7 @@ public class PostsService
         }
         catch (Exception e)
         {
-            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostService.IncrementTotalComments()");
+            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostsService.IncrementTotalComments()");
         }
     }
 
@@ -186,7 +156,7 @@ public class PostsService
     {
         try
         {
-            var userId = postId.Split("#")[1];
+            string userId = postId.Split("#")[1];
             var request = new UpdateItemRequest
             {
                 TableName = TABLE_NAME,
@@ -209,7 +179,7 @@ public class PostsService
         }
         catch (Exception e)
         {
-            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostService.DecrementTotalComments()");
+            return ServiceResult<int>.Failure(e, $"Failed for {postId}.", "PostsService.DecrementTotalComments()");
         }
     }
 }
