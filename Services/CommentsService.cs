@@ -6,14 +6,14 @@ using AnthemAPI.Models;
 
 namespace AnthemAPI.Services;
 
-public class CommentService
+public class CommentsService
 {
     private readonly IAmazonDynamoDB _client;
     private readonly DynamoDBContext _context;
     private const int PAGE_LIMIT = 20;
     private const string TABLE_NAME = "Comments";
 
-    public CommentService(IAmazonDynamoDB client)
+    public CommentsService(IAmazonDynamoDB client)
     {
         _client = client;
         _context = new DynamoDBContext(client);
@@ -28,34 +28,20 @@ public class CommentService
         }
         catch (Exception e)
         {
-            return ServiceResult<Comment>.Failure(e, $"Failed to save {comment.Id} for {comment.PostId}.", "CommentService.Save()");
+            return ServiceResult<Comment>.Failure(e, $"Failed to save {comment.Id} for {comment.PostId}.", "CommentsService.Save()");
         }
     }
 
-    public async Task<ServiceResult<List<Comment>?>> GetAll(string postId)
-    {
-        try
-        {
-            var search = _context.QueryAsync<Comment>(postId);
-            var comments = await search.GetRemainingAsync();
-            return ServiceResult<List<Comment>?>.Success(comments);
-        }
-        catch (Exception e)
-        {
-            return ServiceResult<List<Comment>?>.Failure(e, $"Failed to get all for {postId}.", "CommentService.GetAll()");
-        }
-    }
-
-    public async Task<ServiceResult<bool>> Delete(Comment comment)
+    public async Task<ServiceResult<Comment?>> Delete(Comment comment)
     {
         try
         {
             await _context.DeleteAsync(comment);
-            return ServiceResult<bool>.Success(true);
+            return ServiceResult<Comment?>.Success(comment);
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {comment.Id} for {comment.PostId}.", "CommentService.Delete()");
+            return ServiceResult<Comment?>.Failure(e, $"Failed to delete {comment.Id} for {comment.PostId}.", "CommentsService.Delete()");
         }
     }
 
