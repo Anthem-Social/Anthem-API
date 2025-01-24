@@ -61,16 +61,16 @@ public class LikesService
         }
     }
 
-    public async Task<ServiceResult<bool>> Delete(Like like)
+    public async Task<ServiceResult<Like?>> Delete(string postId, string likeId)
     {
         try
         {
-            await _context.DeleteAsync(like);
-            return ServiceResult<bool>.Success(true);
+            await _context.DeleteAsync<Like>(postId, likeId);
+            return ServiceResult<Like?>.Success(null);
         }
         catch (Exception e)
         {
-            return ServiceResult<bool>.Failure(e, $"Failed to delete {like.Id} for {like.PostId}.", "LikesService.Delete()");
+            return ServiceResult<Like?>.Failure(e, $"Failed to delete {likeId} for {postId}.", "LikesService.Delete()");
         }
     }
 

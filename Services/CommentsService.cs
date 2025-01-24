@@ -32,16 +32,16 @@ public class CommentsService
         }
     }
 
-    public async Task<ServiceResult<Comment?>> Delete(Comment comment)
+    public async Task<ServiceResult<Comment?>> Delete(string postId, string commentId)
     {
         try
         {
-            await _context.DeleteAsync(comment);
-            return ServiceResult<Comment?>.Success(comment);
+            await _context.DeleteAsync<Comment>(postId, commentId);
+            return ServiceResult<Comment?>.Success(null);
         }
         catch (Exception e)
         {
-            return ServiceResult<Comment?>.Failure(e, $"Failed to delete {comment.Id} for {comment.PostId}.", "CommentsService.Delete()");
+            return ServiceResult<Comment?>.Failure(e, $"Failed to delete {commentId} for {postId}.", "CommentsService.Delete()");
         }
     }
 
