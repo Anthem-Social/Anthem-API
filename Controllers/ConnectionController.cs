@@ -20,23 +20,23 @@ public class ConnectionController
     private readonly UsersService _usersService = usersService;
 
     [HttpPost("chat")]
-    public async void CreateChatConnection([FromBody] ChatConnectionCreate connection)
+    public async void CreateChatConnection([FromBody] ChatConnectionCreate dto)
     {
         Console.WriteLine("Connected.");
-        Console.WriteLine("ConnectionId: " + connection.ConnectionId);
-        Console.WriteLine("ChatId: " + connection.ChatId);
-        await _chatConnectionsService.AddConnection(connection.ChatId, connection.ConnectionId);
+        Console.WriteLine("ConnectionId: " + dto.ConnectionId);
+        Console.WriteLine("ChatId: " + dto.ChatId);
+        await _chatConnectionsService.AddConnection(dto.ChatId, dto.ConnectionId);
     }
 
     [HttpPost("status")]
-    public async void CreateStatusConnection([FromBody] StatusConnectionCreate connection)
+    public async void CreateStatusConnection([FromBody] StatusConnectionCreate dto)
     {
         Console.WriteLine("Connected.");
-        Console.WriteLine("ConnectionId: " + connection.ConnectionId);
-        Console.WriteLine("UserId: " + connection.UserId);
+        Console.WriteLine("ConnectionId: " + dto.ConnectionId);
+        Console.WriteLine("UserId: " + dto.UserId);
 
         // Load the user
-        var loadUser = await _usersService.Load(connection.UserId);            
+        var loadUser = await _usersService.Load(dto.UserId);            
         if (loadUser.Data is null || loadUser.IsFailure)
             return;
 
@@ -57,7 +57,7 @@ public class ConnectionController
         List<string> friends = loadFriends.Data.Select(f => f.FollowerUserId).ToList();
         
         // Add the Connection Id to each friends' Status Connection list
-        var add = await _statusConnectionsService.AddConnectionToAll(friends, connection.ConnectionId);
+        var add = await _statusConnectionsService.AddConnectionToAll(friends, dto.ConnectionId);
         if (add.IsFailure)
             return;
 
