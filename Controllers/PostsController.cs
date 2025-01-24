@@ -24,6 +24,7 @@ public class PostsController
             Id = $"{DateTime.UtcNow:o}#{dto.UserId}",
             ContentType = dto.ContentType,
             Content = dto.Content,
+            Text = dto.Text,
             TotalLikes = 0,
             TotalComments = 0
         };

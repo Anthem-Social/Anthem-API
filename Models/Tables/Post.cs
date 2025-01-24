@@ -12,6 +12,7 @@ public class Post
     public required string Id { get; set; } // ${CreatedAt:o}#{UserId}
     public required ContentType ContentType { get; set; }
     public required string Content { get; set; }
+    public required string Text { get; set; }
     public required int TotalLikes { get; set; }
     public required int TotalComments { get; set; }
 }
