@@ -61,9 +61,9 @@ public class ChatsController
     [HttpDelete("{chatId}")]
     public async Task<IActionResult> Delete(string chatId)
     {
-        var result = await _chatsService.Delete(chatId);
+        var delete = await _chatsService.Delete(chatId);
         
-        if (result.IsFailure)
+        if (delete.IsFailure)
             return StatusCode(500);
 
         return NoContent();
@@ -204,7 +204,7 @@ public class ChatsController
             return StatusCode(500);
         
         var data = new {
-            message = load.Data.Item1,
+            messages = load.Data.Item1,
             lastEvaluatedKey = load.Data.Item2
         };
 
