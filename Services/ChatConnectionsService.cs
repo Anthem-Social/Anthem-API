@@ -65,7 +65,7 @@ public class ChatConnectionsService
         }
     }
 
-    public async Task<ServiceResult<ChatConnection>> RemoveConnection(string chatId, string connectionId)
+    public async Task<ServiceResult<ChatConnection>> RemoveConnections(string chatId, List<string> connectionIds)
     {
         try
         {
@@ -76,10 +76,10 @@ public class ChatConnectionsService
                 {
                     { "ChatId", new AttributeValue { S = chatId } }
                 },
-                UpdateExpression = "DELETE ConnectionIds :connectionId",
+                UpdateExpression = "DELETE ConnectionIds :connectionIds",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    [":connectionId"] = new AttributeValue { SS = [connectionId] }
+                    [":connectionIds"] = new AttributeValue { SS = connectionIds }
                 },
                 ReturnValues = ReturnValue.ALL_NEW
             };
