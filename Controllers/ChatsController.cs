@@ -1,17 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
 using AnthemAPI.Services;
 using AnthemAPI.Models;
+using AnthemAPI.Common;
 
 [ApiController]
 [Route("chats")]
 public class ChatsController
 (
+    ChatConnectionsService chatConnectionsService,
     ChatsService chatsService,
+    IConfiguration configuration,
     MessagesService messagesService,
     UsersService usersService
 ) : ControllerBase
 {
+    private readonly ChatConnectionsService _chatConnectionsService = chatConnectionsService;
     private readonly ChatsService _chatsService = chatsService;
+    private readonly IConfiguration _configuration = configuration;
     private readonly MessagesService _messagesService = messagesService;
     private readonly UsersService _usersService = usersService;
 
@@ -182,9 +187,22 @@ public class ChatsController
 
         if (save.IsFailure)
             return StatusCode(500);
-
-        // TODO: send to live chatters
         
+        // Send Message to live chat connections
+        var load = await _chatConnectionsService.Load(chatId);
+        var gone = new List<string>();
+
+        if (load.IsSuccess && load.Data is not null && load.Data.ConnectionIds.Count > 0)
+        {
+            gone = await Utility.SendToConnections(_configuration["ChatApiGatewayUrl"]!, load.Data.ConnectionIds, message);
+
+            if (gone.Count > 0)
+            {
+                // Remove gone connections
+                await _chatConnectionsService.RemoveConnections(chatId, gone);
+            }
+        }
+
         // Update the Chat
         var update = await _chatsService.Update(chatId, now, message.Content);
 
