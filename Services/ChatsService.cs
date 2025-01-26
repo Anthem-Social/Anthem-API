@@ -2,7 +2,6 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
-using AnthemAPI.Common.Helpers;
 using AnthemAPI.Models;
 using static AnthemAPI.Common.Constants;
 
@@ -87,10 +86,10 @@ public class ChatsService
                 Id = response.Attributes["Id"].S,
                 Name = response.Attributes["Name"].S,
                 UserIds = response.Attributes["UserIds"].SS.ToHashSet(),
-                LastMessageAt = Helpers.ToDateTimeUTC(response.Attributes["LastMessageAt"].S),
+                LastMessageAt = Utility.ToDateTimeUTC(response.Attributes["LastMessageAt"].S),
                 Preview = response.Attributes["Preview"].S,
                 CreatorUserId = response.Attributes["CreatorUserId"].S,
-                CreatedAt = Helpers.ToDateTimeUTC(response.Attributes["CreatedAt"].S)
+                CreatedAt = Utility.ToDateTimeUTC(response.Attributes["CreatedAt"].S)
             };
 
             return ServiceResult<Chat>.Success(chat);

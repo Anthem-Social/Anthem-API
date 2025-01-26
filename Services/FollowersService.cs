@@ -2,7 +2,6 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
-using AnthemAPI.Common.Helpers;
 using AnthemAPI.Models;
 
 namespace AnthemAPI.Services;
@@ -77,7 +76,7 @@ public class FollowersService
                 {
                     UserId = follower["UserId"].S,
                     FollowerUserId = follower["FollowerUserId"].S,
-                    CreatedAt = Helpers.ToDateTimeUTC(follower["CreatedAt"].S)
+                    CreatedAt = Utility.ToDateTimeUTC(follower["CreatedAt"].S)
                 })
                 .ToList();
 
@@ -125,7 +124,7 @@ public class FollowersService
                 {
                     UserId = following["UserId"].S,
                     FollowerUserId = following["FollowerUserId"].S,
-                    CreatedAt = Helpers.ToDateTimeUTC(following["CreatedAt"].S)
+                    CreatedAt = Utility.ToDateTimeUTC(following["CreatedAt"].S)
                 })
                 .ToList();
 

@@ -2,10 +2,12 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Amazon.ApiGatewayManagementApi;
+using Amazon.ApiGatewayManagementApi.Model;
 
-namespace AnthemAPI.Common.Helpers;
+namespace AnthemAPI.Common;
 
-public static class Helpers
+public static class Utility
 {
     private static byte[] ToBytes(string key)
     {
@@ -70,5 +72,45 @@ public static class Helpers
     public static DateTime ToDateTimeUTC(string iso8601)
     {
         return DateTime.Parse(iso8601, null, DateTimeStyles.AssumeUniversal);
+    }
+
+    public static async Task<List<string>> SendToConnections(string url, HashSet<string> connectionIds, object message)
+    {
+        var config = new AmazonApiGatewayManagementApiConfig
+        {
+            ServiceURL = url
+        };
+        var client = new AmazonApiGatewayManagementApiClient(config);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        string json = JsonSerializer.Serialize(message, options);
+        byte[] bytes = Encoding.UTF8.GetBytes(json);
+        var gone = new List<string>();
+
+        var posts = connectionIds.Select(async connectionId =>
+        {
+            try
+            {
+                await client.PostToConnectionAsync(new PostToConnectionRequest
+                {
+                    ConnectionId = connectionId,
+                    Data = new MemoryStream(bytes)
+                });
+
+                Console.WriteLine($"Sending to {connectionId}.");
+            }
+            catch (GoneException)
+            {
+                gone.Add(connectionId);
+
+                Console.WriteLine("Adding " + connectionId + " to gone.");
+            }
+        });
+
+        await Task.WhenAll(posts);
+
+        return gone;
     }
 }

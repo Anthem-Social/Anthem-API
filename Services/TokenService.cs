@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AnthemAPI.Common;
-using AnthemAPI.Common.Helpers;
 
 namespace AnthemAPI.Services;
 
@@ -42,7 +41,7 @@ public class TokenService
 
             if (json.TryGetProperty("refresh_token", out var refreshToken))
             {
-                string encrypted = Helpers.Encrypt(_configuration["EncryptionKey"]!, refreshToken.GetString()!);
+                string encrypted = Utility.Encrypt(_configuration["EncryptionKey"]!, refreshToken.GetString()!);
                 string result = json.GetRawText().Replace(refreshToken.GetString()!, encrypted);
 
                 return ServiceResult<string>.Success(result);
@@ -60,7 +59,7 @@ public class TokenService
     {
         try
         {
-            string decrypted = Helpers.Decrypt(_configuration["EncryptionKey"]!, refreshToken);
+            string decrypted = Utility.Decrypt(_configuration["EncryptionKey"]!, refreshToken);
             var data = new Dictionary<string, string>
             {
                 { "grant_type", "refresh_token" },

@@ -1,4 +1,4 @@
-using AnthemAPI.Common.Helpers;
+using AnthemAPI.Common;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
@@ -39,7 +39,7 @@ public class TokenController
         if (refresh.Data is null || refresh.IsFailure)
             return StatusCode(500);
 
-        string complete = Helpers.AddRefreshTokenProperty(refresh.Data, refreshToken);
+        string complete = Utility.AddRefreshTokenProperty(refresh.Data, refreshToken);
         JsonElement element = JsonDocument.Parse(complete).RootElement;
 
         var save = await _authorizationsService.Save(element);
