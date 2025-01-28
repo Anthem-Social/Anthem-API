@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2.DataModel;
+using AnthemAPI.Common;
 
 namespace AnthemAPI.Models;
 
@@ -7,8 +8,8 @@ public class User
 {
     [DynamoDBHashKey]
     public required string Id { get; set; }
-    public required bool Premium { get; set; }
-    public required string Nickname { get; set; }
+    public required MusicProvider MusicProvider { get; set; }
+    public string? Nickname { get; set; }
     public string? PictureUrl { get; set; }
     public string? Bio { get; set ; }
     public Track? Anthem { get; set; }
