@@ -9,4 +9,5 @@ public class Feed
     public required string UserId { get; set; }
     [DynamoDBRangeKey]
     public required string PostId { get; set; }
+    public required long ExpiresAt { get; set; }
 }
