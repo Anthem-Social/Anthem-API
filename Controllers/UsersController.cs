@@ -125,6 +125,8 @@ public class UsersController
         return Ok(getChats.Data);
     }
 
+    // [HttpGet("{userId}/feed")]
+
     // [HttpGet("{userId}/posts")]
 
     [HttpGet("{userId}/status")]

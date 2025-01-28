@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
@@ -64,6 +65,27 @@ public class StatusConnectionsService
 
     public async Task<ServiceResult<StatusConnection?>> AddConnectionToAll(List<string> userIds, string connectionId)
     {
+        // var request = new UpdateItemRequest
+        // {
+        //     TableName = TABLE_NAME,
+        //     Key = new Dictionary<string, AttributeValue>
+        //     {
+        //         { "UserId", new AttributeValue { S = userIds[0] } }
+        //     },
+        //     UpdateExpression = "ADD ConnectionIds :connectionId",
+        //     ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+        //     {
+        //         [":connectionId"] = new AttributeValue { SS = [connectionId] }
+        //     },
+        //     ReturnValues = ReturnValue.UPDATED_NEW
+        // };
+
+        // var response = await _client.UpdateItemAsync(request);
+
+        // Console.WriteLine("Response: \n", JsonSerializer.Serialize(response.Attributes));
+        // return ServiceResult<StatusConnection?>.Success(null);
+
+        Console.WriteLine($"Adding {connectionId} to {string.Join(", ", userIds)}.");
         try
         {
             var batches = new List<Task<BatchExecuteStatementResponse>>();
@@ -76,12 +98,18 @@ public class StatusConnectionsService
                     Statements = ids.Select(userId => new BatchStatementRequest
                     {
                         Statement = $"UPDATE {TABLE_NAME}" +
-                                    " ADD ConnectionIds ?" +
+                                    // " ADD ConnectionIds ?" +
+                                    // " SET ConnectionIds = list_append(if_not_exists(ConnectionIds, :emptyList), :connectionId)" +
+                                    " SET ConnectionIds = list_append(if_not_exists(ConnectionIds, ?), ?)" +
                                     " WHERE UserId = ?",
+                                    // " WHERE UserId = :userId",
                         Parameters = new List<AttributeValue>
                         {
-                            new AttributeValue { SS = [connectionId] },
-                            new AttributeValue { S = userId }
+                            // new AttributeValue { SS = new List<string> { connectionId } },
+                            // new AttributeValue { S = userId}
+                            new AttributeValue { L = new List<AttributeValue>() },  // For :emptyList
+                            new AttributeValue { SS = new List<string> { connectionId } },  // For :connectionId
+                            new AttributeValue { S = userId }  // For :userId
                         }
                     }).ToList()
                 };
@@ -90,6 +118,8 @@ public class StatusConnectionsService
             }
 
             await Task.WhenAll(batches);
+
+            Console.WriteLine("Result: \n" + JsonSerializer.Serialize(batches[0].Result.Responses[0].Item));
 
             return ServiceResult<StatusConnection?>.Success(null);
         }
