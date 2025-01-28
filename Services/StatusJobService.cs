@@ -1,12 +1,8 @@
-using System.Text;
 using System.Text.Json;
-using Amazon.ApiGatewayManagementApi;
-using Amazon.ApiGatewayManagementApi.Model;
 using Quartz;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
 using static AnthemAPI.Common.Constants;
-using AnthemAPI.Common.Helpers;
 
 namespace AnthemAPI.Services;
 
@@ -124,7 +120,7 @@ public class StatusJobService
 public class EmitStatus : IJob
 {
     private readonly AuthorizationsService _authorizationsService;
-    private readonly IAmazonApiGatewayManagementApi _client;
+    private readonly IConfiguration _configuration;
     private readonly StatusJobService _statusJobService;
     private readonly SpotifyService _spotifyService;
     private readonly StatusConnectionsService _statusConnectionsService;
@@ -141,12 +137,8 @@ public class EmitStatus : IJob
         TokenService tokenService
     )
     {
-        var config = new AmazonApiGatewayManagementApiConfig
-        {
-            ServiceURL = configuration["StatusApiGatewayUrl"]
-        };
-        _client = new AmazonApiGatewayManagementApiClient(config);
         _authorizationsService = authorizationsService;
+        _configuration = configuration;
         _statusJobService = statusJobService;
         _spotifyService = spotifyService;
         _statusConnectionsService = statusConnectionsService;
@@ -177,7 +169,7 @@ public class EmitStatus : IJob
                 if (refresh.Data is null || refresh.IsFailure)
                     throw new Exception(refresh.ErrorMessage);
 
-                string complete = Helpers.AddRefreshTokenProperty(refresh.Data, authorization.RefreshToken);
+                string complete = Utility.AddRefreshTokenProperty(refresh.Data, authorization.RefreshToken);
                 JsonElement element = JsonDocument.Parse(complete).RootElement;
                 var save = await _authorizationsService.Save(element);
 
@@ -186,17 +178,6 @@ public class EmitStatus : IJob
 
                 authorization = save.Data;
             }
-
-            // Get the user's status connections
-            var connections = await _statusConnectionsService.Load(userId);
-
-            if (connections.Data is null || connections.IsFailure)
-                throw new Exception(connections.ErrorMessage);
-
-            HashSet<string> connectionIds = connections.Data.ConnectionIds;
-
-            if (connectionIds.Count == 0)
-                throw new Exception("ConnectionIds list is empty.");
 
             // Get the user's Spotify status
             var getStatus = await _spotifyService.GetStatus(authorization.AccessToken, userId);
@@ -228,36 +209,20 @@ public class EmitStatus : IJob
 
             if (saveStatus.Data is null || saveStatus.IsFailure)
                 throw new Exception(saveStatus.ErrorMessage);
+            
+            // Get the user's status connections
+            var connections = await _statusConnectionsService.Load(userId);
+
+            if (connections.Data is null || connections.IsFailure)
+                throw new Exception(connections.ErrorMessage);
+
+            HashSet<string> connectionIds = connections.Data.ConnectionIds;
+
+            if (connectionIds.Count == 0)
+                throw new Exception("ConnectionIds list is empty.");
 
             // Send the user's Spotify status to all connections
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-            string json = JsonSerializer.Serialize(status, options);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            var gone = new List<string>();
-
-            var posts = connectionIds.Select(async connectionId =>
-            {
-                try
-                {
-                    await _client.PostToConnectionAsync(new PostToConnectionRequest
-                    {
-                        ConnectionId = connectionId,
-                        Data = new MemoryStream(bytes)
-                    });
-
-                    Console.WriteLine($"Successfully sent to ConnectionId: {connectionId}");
-                }
-                catch (GoneException)
-                {
-                    Console.WriteLine("Adding " + connectionId + " to gone.");
-                    gone.Add(connectionId);
-                }
-            });
-
-            await Task.WhenAll(posts);
+            List<string> gone = await Utility.SendToConnections(_configuration["StatusApiGatewayUrl"]!, connectionIds, status);
 
             // Remove all connections that are gone
             if (gone.Count > 0)
