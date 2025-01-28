@@ -20,9 +20,9 @@ public class UsersController
     private readonly UsersService _usersService = usersService;
 
     [HttpGet("{userId}")]
-    public async Task<IActionResult> Get(string id)
+    public async Task<IActionResult> Get(string userId)
     {
-        var load = await _usersService.Load(id);
+        var load = await _usersService.Load(userId);
 
         if (load.IsFailure)
             return StatusCode(500);
