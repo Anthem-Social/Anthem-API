@@ -190,11 +190,10 @@ public class ChatsController
         
         // Send Message to live chat connections
         var load = await _chatConnectionsService.Load(chatId);
-        var gone = new List<string>();
 
         if (load.IsSuccess && load.Data is not null && load.Data.ConnectionIds.Count > 0)
         {
-            gone = await Utility.SendToConnections(_configuration["ChatApiGatewayUrl"]!, load.Data.ConnectionIds, message);
+            List<string> gone = await Utility.SendToConnections(_configuration["ChatApiGatewayUrl"]!, load.Data.ConnectionIds, message);
 
             if (gone.Count > 0)
             {
