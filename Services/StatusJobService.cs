@@ -171,7 +171,7 @@ public class EmitStatus : IJob
 
                 string complete = Utility.AddRefreshTokenProperty(refresh.Data, authorization.RefreshToken);
                 JsonElement element = JsonDocument.Parse(complete).RootElement;
-                var save = await _authorizationsService.Save(element);
+                var save = await _authorizationsService.Save(userId, element);
 
                 if (save.Data is null || save.IsFailure)
                     throw new Exception(save.ErrorMessage);

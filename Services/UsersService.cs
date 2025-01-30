@@ -72,4 +72,32 @@ public class UsersService
             return ServiceResult<User?>.Failure(e, $"Failed to add chat id.", "UsersService.AddChatId()");
         }
     }
+
+    public async Task<ServiceResult<User?>> UpdateMusicProvider(string userId, MusicProvider musicProvider)
+    {
+        try
+        {
+            var request = new UpdateItemRequest
+            {
+                TableName = TABLE_NAME,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    ["Id"] = new AttributeValue { S = userId }
+                },
+                UpdateExpression = "SET MusicProvider :musicProvider",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":musicProvider"] = new AttributeValue { N = ((int) musicProvider).ToString() }
+                }
+            };
+
+            var response = await _client.UpdateItemAsync(request);
+
+            return ServiceResult<User?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<User?>.Failure(e, $"Failed to update for {userId}", "UsersService.UpdateMusicProvider");
+        }
+    }
 }

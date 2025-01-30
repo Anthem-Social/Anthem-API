@@ -46,22 +46,14 @@ public class AuthorizationsService
         }
     }
 
-    public async Task<ServiceResult<Authorization>> Save(JsonElement json)
+    public async Task<ServiceResult<Authorization>> Save(string userId, JsonElement json)
     {
         try
         {
             string accessToken = json.GetProperty("access_token").GetString()!;
             string refreshToken = json.GetProperty("refresh_token").GetString()!;
             long expiresAt = json.GetProperty("expires_in").GetInt64() + DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            
-            var result = await _spotifyService.GetUserId(accessToken);
 
-            if (result.Data is null || result.IsFailure)
-            {
-                return ServiceResult<Authorization>.Failure(null, "Failed to get userId.", "AuthorizationsService.Save(json)");
-            }
-
-            string userId = result.Data!;
             var authorization = new Authorization
             {
                 UserId = userId,

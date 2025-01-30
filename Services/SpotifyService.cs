@@ -15,7 +15,7 @@ public class SpotifyService
         _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
     }
 
-    public async Task<ServiceResult<string>> GetUserId(string accessToken)
+    public async Task<ServiceResult<(string, MusicProvider)>> GetSubscriptionLevel(string accessToken)
     {
         try
         {
@@ -25,18 +25,22 @@ public class SpotifyService
 
             if (!response.IsSuccessStatusCode)
             {
-                return ServiceResult<string>.Failure(null, $"Error response: {response}", "SpotifyService.GetId()");
+                return ServiceResult<(string, MusicProvider)>.Failure(null, $"Error response: {response}", "SpotifyService.GetSubscriptionLevel()");
             }
 
             string content = await response.Content.ReadAsStringAsync();
             JsonElement json = JsonDocument.Parse(content).RootElement;
             string userId = json.GetProperty("id").GetString()!;
+            string product = json.GetProperty("product").GetString()!;
+            MusicProvider musicProvider = product == "premium"
+                ? MusicProvider.SpotifyPremium
+                : MusicProvider.SpotifyFree;
 
-            return ServiceResult<string>.Success(userId);
+            return ServiceResult<(string, MusicProvider)>.Success((userId, musicProvider));
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, "Failed to get UserId.", "SpotifyService.GetUserId()");
+            return ServiceResult<(string, MusicProvider)>.Failure(e, "Failed to get subscription level.", "SpotifyService.GetSubscriptionLevel()");
         }
     }
 
