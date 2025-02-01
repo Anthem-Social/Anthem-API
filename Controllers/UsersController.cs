@@ -33,6 +33,61 @@ public class UsersController
         return Ok(load.Data);
     }
 
+    [HttpPut("{userId}")]
+    public async Task<IActionResult> Put(string userId, [FromBody] UserUpdate dto)
+    {
+        var update = await _usersService.Update(userId, dto);
+
+        if (update.IsFailure || update.Data is null)
+            return StatusCode(500);
+        
+        return Ok(update.Data);
+    }
+
+    [HttpGet("{userId}/chats")]
+    public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
+    {
+        var loadUser = await _usersService.Load(userId);
+
+        if (loadUser.IsFailure)
+            return StatusCode(500);
+
+        if (loadUser.Data is null)
+            return NotFound();
+        
+        List<string> chatIds = loadUser.Data.ChatIds.ToList();
+
+        var getChats = await _chatsService.LoadPage(chatIds, page);
+
+        if (getChats.IsFailure)
+            return StatusCode(500);
+
+        return Ok(getChats.Data);
+    }
+
+    // [HttpGet("{userId}/feed")]
+
+    [HttpGet("{userId}/followers")]
+    public async Task<IActionResult> GetFollowers(string userId, [FromQuery] string? exclusiveStartKey = null)
+    {
+        // Ensure User exists
+        var loadUser = await _usersService.Load(userId);
+
+        if (loadUser.IsFailure)
+            return StatusCode(500);
+
+        if (loadUser.Data is null)
+            return NotFound();
+        
+        // Load a page of the users that follow them
+        var loadFollowers = await _followersService.LoadPageFollowers(userId, exclusiveStartKey);
+
+        if (loadFollowers.IsFailure)
+            return StatusCode(500);
+        
+        return Ok(loadFollowers.Data.Item1);
+    }
+
     [HttpPost("{userId}/followers/{followerUserId}")]
     public async Task<IActionResult> CreateFollower(string userId, string followerUserId)
     {
@@ -62,27 +117,6 @@ public class UsersController
         return NoContent();
     }
 
-    [HttpGet("{userId}/followers")]
-    public async Task<IActionResult> GetFollowers(string userId, [FromQuery] string? exclusiveStartKey = null)
-    {
-        // Ensure User exists
-        var loadUser = await _usersService.Load(userId);
-
-        if (loadUser.IsFailure)
-            return StatusCode(500);
-
-        if (loadUser.Data is null)
-            return NotFound();
-        
-        // Load a page of the users that follow them
-        var loadFollowers = await _followersService.LoadPageFollowers(userId, exclusiveStartKey);
-
-        if (loadFollowers.IsFailure)
-            return StatusCode(500);
-        
-        return Ok(loadFollowers.Data.Item1);
-    }
-
     [HttpGet("{userId}/followings")]
     public async Task<IActionResult> GetFollowings(string userId, [FromQuery] string? exclusiveStartKey = null)
     {
@@ -104,30 +138,9 @@ public class UsersController
         return Ok(loadFollowings.Data.Item1);
     }
 
-    [HttpGet("{userId}/chats")]
-    public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
-    {
-        var loadUser = await _usersService.Load(userId);
-
-        if (loadUser.IsFailure)
-            return StatusCode(500);
-
-        if (loadUser.Data is null)
-            return NotFound();
-        
-        List<string> chatIds = loadUser.Data.ChatIds.ToList();
-
-        var getChats = await _chatsService.LoadPage(chatIds, page);
-
-        if (getChats.IsFailure)
-            return StatusCode(500);
-
-        return Ok(getChats.Data);
-    }
-
-    // [HttpGet("{userId}/feed")]
-
     // [HttpGet("{userId}/posts")]
+
+    // [HttpGet("{userId}/profile")]
 
     [HttpGet("{userId}/status")]
     public async Task<IActionResult> GetStatus(string userId)
