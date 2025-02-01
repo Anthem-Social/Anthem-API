@@ -11,6 +11,7 @@ public class PostsService
     private readonly IAmazonDynamoDB _client;
     private readonly DynamoDBContext _context;
     private const string TABLE_NAME = "Posts";
+    private const int PAGE_LIMIT = 21;
 
     public PostsService(IAmazonDynamoDB client)
     {
@@ -56,6 +57,60 @@ public class PostsService
         catch (Exception e)
         {
             return ServiceResult<Post?>.Failure(e, $"Failed to delete {postId}.", "PostsService.Delete()");
+        }
+    }
+
+    public async Task<ServiceResult<(List<Post>, string?)>> LoadPage(string userId, string? exclusiveStartKey = null)
+    {
+        try
+        {
+            var request = new QueryRequest
+            {
+                TableName = TABLE_NAME,
+                KeyConditionExpression = "UserId = :userId",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":userId"] = new AttributeValue { S = userId }
+                },
+                ScanIndexForward = false,
+                Limit = PAGE_LIMIT
+            };
+
+            if (exclusiveStartKey is not null)
+            {
+                request.ExclusiveStartKey = new Dictionary<string, AttributeValue>
+                {
+                    ["UserId"] = new AttributeValue { S = userId },
+                    ["Id"] = new AttributeValue { S = exclusiveStartKey }
+                };
+            }
+            
+            var response = await _client.QueryAsync(request);
+
+            List<Post> posts = response.Items
+                .Select(post => new Post
+                {
+                    UserId = post["UserId"].S,
+                    Id = post["Id"].S,
+                    ContentType = (ContentType) int.Parse(post["ContentType"].N),
+                    Content = post["Content"].S,
+                    Text = post.ContainsKey("Text")
+                        ? post["Text"].S
+                        : null,
+                    TotalLikes = long.Parse(post["TotalLikes"].N),
+                    TotalComments = long.Parse(post["TotalComments"].N)
+                })
+                .ToList();
+
+            string? lastEvaluatedKey = response.LastEvaluatedKey.ContainsKey("Id")
+                ? response.LastEvaluatedKey["Id"].S
+                : null;
+
+            return ServiceResult<(List<Post>, string?)>.Success((posts, lastEvaluatedKey));
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<(List<Post>, string?)>.Failure(e, $"Failed to load page for {userId}.", "PostsService.LoadPage()");
         }
     }
 

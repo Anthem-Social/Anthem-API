@@ -97,7 +97,8 @@ public class PostsController
         if (load.IsFailure)
             return StatusCode(500);
         
-        var data = new {
+        var data = new
+        {
             comments = load.Data.Item1,
             lastEvaluatedKey = load.Data.Item2
         };
@@ -152,7 +153,8 @@ public class PostsController
         if (load.IsFailure)
             return StatusCode(500);
         
-        var data = new {
+        var data = new
+        {
             likes = load.Data.Item1,
             lastEvaluatedKey = load.Data.Item2
         };

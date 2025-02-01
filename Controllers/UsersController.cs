@@ -9,13 +9,17 @@ namespace AnthemAPI.Controllers;
 public class UsersController
 (
     ChatsService chatsService,
+    FeedsService feedsService,
     FollowersService followersService,
+    PostsService postsService,
     StatusesService statusesService,
     UsersService usersService
 ): ControllerBase
 {
     private readonly ChatsService _chatsService = chatsService;
+    private readonly FeedsService _feedsService = feedsService;
     private readonly FollowersService _followersService = followersService;
+    private readonly PostsService _postsService = postsService;
     private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
 
@@ -61,11 +65,32 @@ public class UsersController
 
         if (getChats.IsFailure)
             return StatusCode(500);
+        
+        var data = new 
+        {
+            chats = getChats.Data,
+            page = page + 1
+        };
 
-        return Ok(getChats.Data);
+        return Ok(data);
     }
 
-    // [HttpGet("{userId}/feed")]
+    [HttpGet("{userId}/feed")]
+    public async Task<IActionResult> GetFeed(string userId, [FromBody] string? exclusiveStartKey = null)
+    {
+        var load = await _feedsService.LoadPage(userId, exclusiveStartKey);
+
+        if (load.IsFailure)
+            return StatusCode(500);
+        
+        var data = new
+        {
+            feed = load.Data.Item1,
+            exclusiveStartKey = load.Data.Item2
+        };
+
+        return Ok(data);
+    }
 
     [HttpGet("{userId}/followers")]
     public async Task<IActionResult> GetFollowers(string userId, [FromQuery] string? exclusiveStartKey = null)
@@ -85,7 +110,13 @@ public class UsersController
         if (loadFollowers.IsFailure)
             return StatusCode(500);
         
-        return Ok(loadFollowers.Data.Item1);
+        var data = new
+        {
+            followers = loadFollowers.Data.Item1,
+            exclusiveStartKey = loadFollowers.Data.Item2
+        };
+        
+        return Ok(data);
     }
 
     [HttpPost("{userId}/followers/{followerUserId}")]
@@ -138,9 +169,22 @@ public class UsersController
         return Ok(loadFollowings.Data.Item1);
     }
 
-    // [HttpGet("{userId}/posts")]
+    [HttpGet("{userId}/posts")]
+    public async Task<IActionResult> GetPosts(string userId, [FromQuery] string? exclusiveStartKey = null)
+    {
+        var load = await _postsService.LoadPage(userId, exclusiveStartKey);
 
-    // [HttpGet("{userId}/profile")]
+        if (load.IsFailure)
+            return StatusCode(500);
+        
+        var data = new
+        {
+            posts = load.Data.Item1,
+            exclusiveStartKey = load.Data.Item2
+        };
+
+        return Ok(data);
+    }
 
     [HttpGet("{userId}/status")]
     public async Task<IActionResult> GetStatus(string userId)

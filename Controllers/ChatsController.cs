@@ -220,7 +220,8 @@ public class ChatsController
         if (load.IsFailure)
             return StatusCode(500);
         
-        var data = new {
+        var data = new
+        {
             messages = load.Data.Item1,
             lastEvaluatedKey = load.Data.Item2
         };
