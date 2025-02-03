@@ -125,13 +125,13 @@ public class UsersController
     }
 
     [Authorize(Self)]
-    [HttpPost("{userId}/followers/{followerUserId}")]
-    public async Task<IActionResult> CreateFollower(string userId, string followerUserId)
+    [HttpPost("{userId}/follow/{followeeUserId}")]
+    public async Task<IActionResult> CreateFollower(string userId, string followeeUserId)
     {
         var follower = new Follower
         {
-            UserId = userId,
-            FollowerUserId = followerUserId,
+            UserId = followeeUserId,
+            FollowerUserId = userId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -144,10 +144,10 @@ public class UsersController
     }
 
     [Authorize(Self)]
-    [HttpDelete("{userId}/followers/{followerUserId}")]
-    public async Task<IActionResult> DeleteFollower(string userId, string followerUserId)
+    [HttpDelete("{userId}/follow/{followeeUserId}")]
+    public async Task<IActionResult> DeleteFollower(string userId, string followeeUserId)
     {
-        var delete = await _followersService.Delete(userId, followerUserId);
+        var delete = await _followersService.Delete(followeeUserId, userId);
 
         if (delete.IsFailure)
             return StatusCode(500);
