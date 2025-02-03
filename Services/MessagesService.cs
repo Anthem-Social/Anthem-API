@@ -19,6 +19,19 @@ public class MessagesService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<Message?>> Load(string messageId)
+    {
+        try
+        {
+            Message? message = await _context.LoadAsync<Message>(messageId);
+            return ServiceResult<Message?>.Success(message);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Message?>.Failure(e, $"Failed to load for {messageId}.", "MessagesService.Load()");
+        }
+    }
+
     public async Task<ServiceResult<Message>> Save(Message message)
     {
         try
