@@ -1,5 +1,3 @@
-using AnthemAPI.Models;
-using AnthemAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
@@ -29,7 +27,7 @@ public class MessageCreatorHandler : AuthorizationHandler<MessageCreatorRequirem
 
         if (messageId.Split("#")[1] != userId)
         {
-            var reason = new AuthorizationFailureReason(this, $"User {userId} is not the creator of message {messageId}.");
+            var reason = new AuthorizationFailureReason(this, $"User {userId} is not the creator of Message {messageId}.");
             context.Fail(reason);
             return Task.CompletedTask;
         }

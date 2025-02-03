@@ -16,7 +16,7 @@ public class UsersController
     PostsService postsService,
     StatusesService statusesService,
     UsersService usersService
-): ControllerBase
+) : ControllerBase
 {
     private readonly ChatsService _chatsService = chatsService;
     private readonly FeedsService _feedsService = feedsService;

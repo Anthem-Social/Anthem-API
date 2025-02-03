@@ -62,9 +62,6 @@ public class StatusConnectionsService
             return ServiceResult<StatusConnection>.Failure(e, $"Failed to clear for {userId}.", "StatusConnectionsService.Clear()");
         }
     }
-
-    public async Task<ServiceResult<StatusConnection?>> AddConnectionToAll(List<string> userIds, string connectionId)
-    {
         // var request = new UpdateItemRequest
         // {
         //     TableName = TABLE_NAME,
@@ -85,6 +82,8 @@ public class StatusConnectionsService
         // Console.WriteLine("Response: \n", JsonSerializer.Serialize(response.Attributes));
         // return ServiceResult<StatusConnection?>.Success(null);
 
+    public async Task<ServiceResult<StatusConnection?>> AddConnectionToAll(List<string> userIds, string connectionId)
+    {
         Console.WriteLine($"Adding {connectionId} to {string.Join(", ", userIds)}.");
         try
         {
@@ -98,18 +97,12 @@ public class StatusConnectionsService
                     Statements = ids.Select(userId => new BatchStatementRequest
                     {
                         Statement = $"UPDATE {TABLE_NAME}" +
-                                    // " ADD ConnectionIds ?" +
-                                    // " SET ConnectionIds = list_append(if_not_exists(ConnectionIds, :emptyList), :connectionId)" +
-                                    " SET ConnectionIds = list_append(if_not_exists(ConnectionIds, ?), ?)" +
+                                    " ADD ConnectionIds ?" +
                                     " WHERE UserId = ?",
-                                    // " WHERE UserId = :userId",
                         Parameters = new List<AttributeValue>
                         {
-                            // new AttributeValue { SS = new List<string> { connectionId } },
-                            // new AttributeValue { S = userId}
-                            new AttributeValue { L = new List<AttributeValue>() },  // For :emptyList
-                            new AttributeValue { SS = new List<string> { connectionId } },  // For :connectionId
-                            new AttributeValue { S = userId }  // For :userId
+                            new AttributeValue { SS = [connectionId] },
+                            new AttributeValue { S = userId }
                         }
                     }).ToList()
                 };
