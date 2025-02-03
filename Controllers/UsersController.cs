@@ -1,6 +1,8 @@
 using AnthemAPI.Models;
 using AnthemAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Controllers;
 
@@ -22,7 +24,7 @@ public class UsersController
     private readonly PostsService _postsService = postsService;
     private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
-
+    
     [HttpGet("{userId}")]
     public async Task<IActionResult> Get(string userId)
     {
@@ -37,6 +39,7 @@ public class UsersController
         return Ok(load.Data);
     }
 
+    [Authorize(Self)]
     [HttpPut("{userId}")]
     public async Task<IActionResult> Put(string userId, [FromBody] UserUpdate dto)
     {
@@ -48,6 +51,7 @@ public class UsersController
         return Ok(update.Data);
     }
 
+    [Authorize(Self)]
     [HttpGet("{userId}/chats")]
     public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
     {
@@ -75,6 +79,7 @@ public class UsersController
         return Ok(data);
     }
 
+    [Authorize(Self)]
     [HttpGet("{userId}/feed")]
     public async Task<IActionResult> GetFeed(string userId, [FromBody] string? exclusiveStartKey = null)
     {
@@ -119,6 +124,7 @@ public class UsersController
         return Ok(data);
     }
 
+    [Authorize(Self)]
     [HttpPost("{userId}/followers/{followerUserId}")]
     public async Task<IActionResult> CreateFollower(string userId, string followerUserId)
     {
@@ -137,6 +143,7 @@ public class UsersController
         return Created();
     }
 
+    [Authorize(Self)]
     [HttpDelete("{userId}/followers/{followerUserId}")]
     public async Task<IActionResult> DeleteFollower(string userId, string followerUserId)
     {

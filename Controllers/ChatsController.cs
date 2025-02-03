@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using AnthemAPI.Services;
 using AnthemAPI.Models;
 using AnthemAPI.Common;
+using Microsoft.AspNetCore.Authorization;
+using static AnthemAPI.Common.Constants;
+using System.Security.Claims;
 
 [ApiController]
 [Route("chats")]
@@ -10,6 +13,7 @@ public class ChatsController
     ChatConnectionsService chatConnectionsService,
     ChatsService chatsService,
     IConfiguration configuration,
+    FollowersService followersService,
     MessagesService messagesService,
     UsersService usersService
 ) : ControllerBase
@@ -17,12 +21,27 @@ public class ChatsController
     private readonly ChatConnectionsService _chatConnectionsService = chatConnectionsService;
     private readonly ChatsService _chatsService = chatsService;
     private readonly IConfiguration _configuration = configuration;
+    private readonly FollowersService _followersService = followersService;
     private readonly MessagesService _messagesService = messagesService;
     private readonly UsersService _usersService = usersService;
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] ChatCreate dto)
     {
+        // Get the creator user
+        string userId = User.FindFirstValue("id")!;
+        
+        // Ensure the members are the user's friends
+        var loadFriends = await _followersService.LoadFriends(userId);
+
+        if (loadFriends.IsFailure || loadFriends.Data is null)
+            return StatusCode(500);
+        
+        HashSet<string> friends = loadFriends.Data.Select(f => f.FollowerUserId).ToHashSet();
+
+        if (!dto.UserIds.IsSubsetOf(friends))
+            return StatusCode(500);
+
         // Create the new Chat
         var chat = new Chat
         {
@@ -30,8 +49,8 @@ public class ChatsController
             Name = dto.Name,
             UserIds = dto.UserIds,
             LastMessageAt = DateTime.UtcNow,
-            Preview = "",
-            CreatorUserId = dto.CreatorUserId,
+            Preview = "New chat created. Start the conversation!",
+            CreatorUserId = userId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -49,6 +68,7 @@ public class ChatsController
         return Created();
     }
 
+    [Authorize(ChatMember)]
     [HttpGet("{chatId}")]
     public async Task<IActionResult> Get(string chatId)
     {
@@ -63,6 +83,7 @@ public class ChatsController
         return Ok(load.Data);
     }
 
+    [Authorize(ChatCreator)]
     [HttpDelete("{chatId}")]
     public async Task<IActionResult> Delete(string chatId)
     {
@@ -70,10 +91,13 @@ public class ChatsController
         
         if (delete.IsFailure)
             return StatusCode(500);
+        
+        // TODO: remove chatid from members chatIds lists
 
         return NoContent();
     }
 
+    [Authorize(ChatMember)]
     [HttpPost("{chatId}/members/{userId}")]
     public async Task<IActionResult> CreateMember(string chatId, string userId)
     {
@@ -122,6 +146,8 @@ public class ChatsController
         return Ok(chat);
     }
 
+    [Authorize(ChatMember)]
+    [Authorize(Self)]
     [HttpDelete("{chatId}/members/{userId}")]
     public async Task<IActionResult> DeleteMember(string chatId, string userId)
     {
@@ -170,15 +196,17 @@ public class ChatsController
         return NoContent();
     }
 
+    [Authorize(ChatMember)]
     [HttpPost("{chatId}/messages")]
     public async Task<IActionResult> CreateMessage(string chatId, [FromBody] MessageCreate dto)
     {
         // Make the new Message
         var now = DateTime.UtcNow;
+        string userId = User.FindFirstValue("id")!;
         var message = new Message
         {
             ChatId = chatId,
-            Id = $"{now:o}#{dto.UserId}",
+            Id = $"{now:o}#{userId}",
             ContentType = dto.ContentType,
             Content = dto.Content
         };
@@ -211,10 +239,10 @@ public class ChatsController
         return Created();
     }
 
+    [Authorize(ChatMember)]
     [HttpGet("{chatId}/messages")]
     public async Task<IActionResult> GetMessages(string chatId, [FromQuery] string? exclusiveStartKey = null)
     {
-        // TODO: Check if chat exists, 404
         var load = await _messagesService.LoadPage(chatId, exclusiveStartKey);
 
         if (load.IsFailure)
@@ -229,6 +257,8 @@ public class ChatsController
         return Ok(data);
     }
 
+    [Authorize(ChatMember)]
+    [Authorize(MessageCreator)]
     [HttpDelete("{chatId}/messages/{messageId}")]
     public async Task<IActionResult> DeleteMessage(string chatId, string messageId)
     {
@@ -243,8 +273,9 @@ public class ChatsController
         return NoContent();
     }
 
+    [Authorize(ChatMember)]
     [HttpPatch("{chatId}/name")]
-    public async Task<IActionResult> Rename(string chatId, string name)
+    public async Task<IActionResult> Rename(string chatId, [FromBody] string name)
     {
         // Load the Chat
         var load = await _chatsService.Load(chatId);
