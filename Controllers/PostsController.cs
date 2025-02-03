@@ -1,6 +1,9 @@
+using System.Security.Claims;
 using AnthemAPI.Models;
 using AnthemAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static AnthemAPI.Common.Constants;
 
 [ApiController]
 [Route("posts")]
@@ -9,7 +12,7 @@ public class PostsController
     CommentsService commentsService,
     LikesService likesService,
     PostsService postsService
-): ControllerBase
+) : ControllerBase
 {
     private readonly CommentsService _commentsService = commentsService;
     private readonly LikesService _likesService = likesService;
@@ -18,10 +21,12 @@ public class PostsController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PostCreate dto)
     {
+        string userId = User.FindFirstValue("id")!;
+
         var post = new Post
         {
-            UserId = dto.UserId,
-            Id = $"{DateTime.UtcNow:o}#{dto.UserId}",
+            UserId = userId,
+            Id = $"{DateTime.UtcNow:o}#{userId}",
             ContentType = dto.ContentType,
             Content = dto.Content,
             Text = dto.Text,
@@ -53,6 +58,7 @@ public class PostsController
         return Ok(load.Data);
     }
 
+    [Authorize(PostCreator)]
     [HttpDelete("{postId}")]
     public async Task<IActionResult> Delete(string postId)
     {
@@ -69,10 +75,12 @@ public class PostsController
     [HttpPost("{postId}/comments")]
     public async Task<IActionResult> CreateComment(string postId, [FromBody] CommentCreate dto)
     {
+        string userId = User.FindFirstValue("id")!;
+
         var comment = new Comment
         {
             PostId = postId,
-            Id = $"{DateTime.UtcNow:o}#{dto.UserId}",
+            Id = $"{DateTime.UtcNow:o}#{userId}",
             Text = dto.Text
         };
 
@@ -106,6 +114,7 @@ public class PostsController
         return Ok(data);
     }
 
+    [Authorize(CommentCreator)]
     [HttpDelete("{postId}/comments/{commentId}")]
     public async Task<IActionResult> DeleteComment(string postId, string commentId)
     {
@@ -122,9 +131,11 @@ public class PostsController
         return NoContent();
     }
 
-    [HttpPost("{postId}/likes/{userId}")]
-    public async Task<IActionResult> CreateLike(string postId, string userId)
+    [HttpPost("{postId}/likes")]
+    public async Task<IActionResult> CreateLike(string postId)
     {
+        string userId = User.FindFirstValue("id")!;
+        
         var like = new Like
         {
             PostId = postId,
@@ -162,6 +173,7 @@ public class PostsController
         return Ok(data);
     }
 
+    [Authorize(LikeCreator)]
     [HttpDelete("{postId}/likes/{likeId}")]
     public async Task<IActionResult> DeleteLike(string postId, string likeId)
     {

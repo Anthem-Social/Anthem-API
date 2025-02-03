@@ -6,7 +6,10 @@ public static class Constants
 {
     public const string ChatCreator = "ChatCreator";
     public const string ChatMember = "ChatMember";
+    public const string CommentCreator = "CommentCreator";
+    public const string LikeCreator = "LikeCreator";
     public const string MessageCreator = "MessageCreator";
+    public const string PostCreator = "PostCreator";
     public const string Self = "Self";
     public const string Spotify = "Spotify";
     public const int DYNAMO_DB_BATCH_GET_LIMIT = 100;

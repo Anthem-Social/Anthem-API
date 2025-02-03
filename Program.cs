@@ -31,7 +31,10 @@ builder.Services.AddAuthentication()
 // Authorization handlers
 builder.Services.AddScoped<IAuthorizationHandler, ChatCreatorHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, ChatMemberHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, CommentCreatorHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, LikeCreatorHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, MessageCreatorHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PostCreatorHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, SelfHandler>();
 
 // Authorization policies
@@ -49,11 +52,29 @@ builder.Services.AddAuthorization(options =>
             .AddAuthenticationSchemes(Spotify)
             .AddRequirements(new ChatMemberRequirement());
     });
+    options.AddPolicy(CommentCreator, policy =>
+    {
+        policy
+            .AddAuthenticationSchemes(Spotify)
+            .AddRequirements(new CommentCreatorRequirement());
+    });
+    options.AddPolicy(LikeCreator, policy =>
+    {
+        policy
+            .AddAuthenticationSchemes(Spotify)
+            .AddRequirements(new LikeCreatorRequirement());
+    });
     options.AddPolicy(MessageCreator, policy =>
     {
         policy
             .AddAuthenticationSchemes(Spotify)
             .AddRequirements(new MessageCreatorRequirement());
+    });
+    options.AddPolicy(PostCreator, policy =>
+    {
+        policy
+            .AddAuthenticationSchemes(Spotify)
+            .AddRequirements(new PostCreatorRequirement());
     });
     options.AddPolicy(Self, policy =>
     {
