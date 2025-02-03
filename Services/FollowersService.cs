@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
+using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
@@ -140,7 +141,7 @@ public class FollowersService
         }
     }
 
-    public async Task<ServiceResult<List<Follower>>> LoadAllFollowings(string followerUserId)
+    public async Task<ServiceResult<List<Follower>>> LoadAllFollowings(string userId)
     {
         try
         {
@@ -149,7 +150,7 @@ public class FollowersService
 
             while (true)
             {
-                var load = await LoadPageFollowings(followerUserId, exclusiveStartKey);
+                var load = await LoadPageFollowings(userId, exclusiveStartKey);
 
                 if (load.IsFailure)
                     return ServiceResult<List<Follower>>.Failure(load.Exception, load.ErrorMessage!, load.ErrorOrigin!);
@@ -167,22 +168,44 @@ public class FollowersService
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {followerUserId}.", "FollowersService.LoadAllFollowings()");
+            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {userId}.", "FollowersService.LoadAllFollowings()");
         }
     }
 
-    public async Task<ServiceResult<List<Follower>>> LoadFriends(string followerUserId, List<string> followees)
+    public async Task<ServiceResult<List<Follower>>> LoadFriends(string userId)
     {
         try
         {
-            var batch = _context.CreateBatchGet<Follower>();
-            followees.ForEach(followee => batch.AddKey(followerUserId, followee));
-            await batch.ExecuteAsync();
-            return ServiceResult<List<Follower>>.Success(batch.Results);
+            var followings = await LoadAllFollowings(userId);
+
+            if (followings.IsFailure)
+                return ServiceResult<List<Follower>>.Failure(followings.Exception, followings.ErrorMessage!, followings.ErrorOrigin!);
+
+            if (followings.Data is null)
+                return ServiceResult<List<Follower>>.Success(new List<Follower>());
+            
+            List<string> followeeUserIds = followings.Data.Select(f => f.UserId).ToList();
+            var batches = new List<BatchGet<Follower>>();
+
+            for (int i = 0; i < followeeUserIds.Count; i += DYNAMO_DB_BATCH_GET_LIMIT)
+            {
+                List<string> followees = followeeUserIds.Skip(i).Take(DYNAMO_DB_BATCH_GET_LIMIT).ToList();
+                var batch = _context.CreateBatchGet<Follower>();
+                followees.ForEach(followee => batch.AddKey(userId, followee));
+                batches.Add(batch);
+            }
+
+            await _context.ExecuteBatchGetAsync(batches.ToArray());
+
+            List<Follower> friends = batches
+                .SelectMany(b => b.Results)
+                .ToList();
+
+            return ServiceResult<List<Follower>>.Success(friends);
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {followerUserId}.", "FollowersService.LoadFriends()");
+            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {userId}.", "FollowersService.LoadFriends()");
         }
     }
 }

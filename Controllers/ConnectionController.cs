@@ -42,15 +42,7 @@ public class ConnectionController
 
         User user = loadUser.Data;
 
-        // Load everyone the User follows
-        var loadAllFollowing = await _followersService.LoadAllFollowings(user.Id);
-        if (loadAllFollowing.Data is null || loadAllFollowing.IsFailure)
-            return;
-        
-        List<string> followees = loadAllFollowing.Data.Select(f => f.UserId).ToList();
-
-        // Get those who follow back
-        var loadFriends = await _followersService.LoadFriends(user.Id, followees);
+        var loadFriends = await _followersService.LoadFriends(user.Id);
         if (loadFriends.Data is null || loadFriends.IsFailure)
             return;
 
