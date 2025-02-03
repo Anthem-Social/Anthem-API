@@ -9,9 +9,9 @@ public class SpotifyService
 {
     private readonly HttpClient _client;
 
-    public SpotifyService(HttpClient client)
+    public SpotifyService(IHttpClientFactory factory)
     {
-        _client = client;
+        _client = factory.CreateClient();
         _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
     }
 

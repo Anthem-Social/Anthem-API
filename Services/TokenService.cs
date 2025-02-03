@@ -10,11 +10,11 @@ public class TokenService
     private readonly HttpClient _client;
     private readonly IConfiguration _configuration;
 
-    public TokenService(HttpClient client, IConfiguration configuration)
+    public TokenService(IHttpClientFactory factory, IConfiguration configuration)
     {
         _configuration = configuration;
         var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_configuration["SpotifyClientId"]}:{_configuration["SpotifyClientSecret"]}"));
-        _client = client;
+        _client = factory.CreateClient();
         _client.BaseAddress = new Uri("https://accounts.spotify.com/api/token");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
     }
