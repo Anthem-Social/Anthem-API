@@ -221,7 +221,7 @@ public class UsersService
                 {
                     { "Id", new AttributeValue { S = userId } }
                 },
-                UpdateExpression = "SET MusicProvider :musicProvider",
+                UpdateExpression = "SET MusicProvider = :musicProvider",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
                     [":musicProvider"] = new AttributeValue { N = ((int) musicProvider).ToString() }
