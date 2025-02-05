@@ -69,7 +69,36 @@ public class UsersService
         }
         catch (Exception e)
         {
-            return ServiceResult<User?>.Failure(e, $"Failed to add chat id.", "UsersService.AddChatId()");
+            return ServiceResult<User?>.Failure(e, $"Failed to add chat id.", "UsersService.AddChatIdToAll()");
+        }
+    }
+
+    public async Task<ServiceResult<User?>> RemoveChatIdFromAll(List<string> userIds, string chatId)
+    {
+        try
+        {
+            var batch = new BatchExecuteStatementRequest
+            {
+                Statements = userIds.Select(userId => new BatchStatementRequest
+                {
+                    Statement = $"UPDATE {TABLE_NAME}" +
+                                " DELETE ChatIds ?" +
+                                " WHERE Id = ?",
+                    Parameters = new List<AttributeValue>
+                    {
+                        new AttributeValue { SS = [chatId] },
+                        new AttributeValue { S = userId }
+                    }
+                }).ToList()
+            };
+
+            await _client.BatchExecuteStatementAsync(batch);
+
+            return ServiceResult<User?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<User?>.Failure(e, $"Failed to remove chat id.", "UsersService.RemoveChatIdFromAll()");
         }
     }
 
