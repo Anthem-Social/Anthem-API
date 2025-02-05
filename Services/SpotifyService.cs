@@ -9,13 +9,13 @@ public class SpotifyService
 {
     private readonly HttpClient _client;
 
-    public SpotifyService(HttpClient client)
+    public SpotifyService(IHttpClientFactory factory)
     {
-        _client = client;
+        _client = factory.CreateClient();
         _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
     }
 
-    public async Task<ServiceResult<string>> GetId(string accessToken)
+    public async Task<ServiceResult<(string, MusicProvider)>> GetSubscriptionLevel(string accessToken)
     {
         try
         {
@@ -25,20 +25,22 @@ public class SpotifyService
 
             if (!response.IsSuccessStatusCode)
             {
-                return ServiceResult<string>.Failure(null, $"Error response: {response}", "SpotifyService.GetId()");
+                return ServiceResult<(string, MusicProvider)>.Failure(null, $"Error response: {response}", "SpotifyService.GetSubscriptionLevel()");
             }
 
             string content = await response.Content.ReadAsStringAsync();
-
             JsonElement json = JsonDocument.Parse(content).RootElement;
+            string userId = json.GetProperty("id").GetString()!;
+            string product = json.GetProperty("product").GetString()!;
+            MusicProvider musicProvider = product == "premium"
+                ? MusicProvider.SpotifyPremium
+                : MusicProvider.SpotifyFree;
 
-            string id = json.GetProperty("id").GetString()!;
-
-            return ServiceResult<string>.Success(id);
+            return ServiceResult<(string, MusicProvider)>.Success((userId, musicProvider));
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, "Failed to get id.", "SpotifyService.GetId()");
+            return ServiceResult<(string, MusicProvider)>.Failure(e, "Failed to get subscription level.", "SpotifyService.GetSubscriptionLevel()");
         }
     }
 
@@ -72,25 +74,25 @@ public class SpotifyService
                 return ServiceResult<Status?>.Success(null);
             }
 
-            // Create Album
             JsonElement albumJson = json.GetProperty("item").GetProperty("album"); 
+            JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
 
+            // Create Album
             var album = new Album
             {
                 Uri = albumJson.GetProperty("uri").GetString()!,
                 CoverUrl = albumJson.GetProperty("images")[1].GetProperty("url").GetString()!
             };
 
-            // Create list of Artists
-            JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
-
+            // Create Artists
             var artists = artistsJson
                 .EnumerateArray()
                 .Select(artist => new Artist 
                 { 
                     Uri = artist.GetProperty("uri").GetString()!,
                     Name = artist.GetProperty("name").GetString()!
-                }).ToList();
+                })
+                .ToList();
 
             // Create Track
             var track = new Track

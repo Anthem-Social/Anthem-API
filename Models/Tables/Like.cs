@@ -6,12 +6,12 @@ namespace AnthemAPI.Models;
 public class Like
 {
     [DynamoDBHashKey]
+    [DynamoDBGlobalSecondaryIndexRangeKey("UserId-index")]
     public required string PostId { get; set; }
+
     [DynamoDBRangeKey]
+    public required string Id { get; set; } // $"{CreatedAt:o}#{UserId}"
+
+    [DynamoDBGlobalSecondaryIndexHashKey("UserId-index")]
     public required string UserId { get; set; }
-    public required DateTime Timestamp { get; set; }
-    [DynamoDBGlobalSecondaryIndexHashKey]
-    public string UserIdIndex => UserId;
-    [DynamoDBGlobalSecondaryIndexRangeKey]
-    public DateTime TimestampIndex => Timestamp;
 }

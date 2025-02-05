@@ -5,11 +5,11 @@ using AnthemAPI.Models;
 
 namespace AnthemAPI.Services;
 
-public class StatusService
+public class StatusesService
 {
     private readonly DynamoDBContext _context;
 
-    public StatusService(IAmazonDynamoDB client)
+    public StatusesService(IAmazonDynamoDB client)
     {
         _context = new DynamoDBContext(client);
     }
@@ -18,12 +18,12 @@ public class StatusService
     {
         try
         {
-            var status = await _context.LoadAsync<Status>(userId);
+            Status? status = await _context.LoadAsync<Status>(userId);
             return ServiceResult<Status?>.Success(status);
         }
         catch (Exception e)
         {
-            return ServiceResult<Status?>.Failure(e, $"Failed to load for {userId}.", "StatusService.Load()");
+            return ServiceResult<Status?>.Failure(e, $"Failed to load for {userId}.", "StatusesService.Load()");
         }
     }
 
@@ -36,7 +36,7 @@ public class StatusService
         }
         catch (Exception e)
         {
-            return ServiceResult<Status>.Failure(e, $"Failed to save for {status.UserId}.", "StatusService.Save()");
+            return ServiceResult<Status>.Failure(e, $"Failed to save for {status.UserId}.", "StatusesService.Save()");
         }
     }
 }

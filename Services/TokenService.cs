@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AnthemAPI.Common;
-using AnthemAPI.Common.Helpers;
 
 namespace AnthemAPI.Services;
 
@@ -11,12 +10,11 @@ public class TokenService
     private readonly HttpClient _client;
     private readonly IConfiguration _configuration;
 
-    public TokenService(HttpClient client, IConfiguration configuration)
+    public TokenService(IHttpClientFactory factory, IConfiguration configuration)
     {
         _configuration = configuration;
-        
         var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_configuration["SpotifyClientId"]}:{_configuration["SpotifyClientSecret"]}"));
-        _client = client;
+        _client = factory.CreateClient();
         _client.BaseAddress = new Uri("https://accounts.spotify.com/api/token");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
     }
@@ -43,7 +41,7 @@ public class TokenService
 
             if (json.TryGetProperty("refresh_token", out var refreshToken))
             {
-                string encrypted = Helpers.Encrypt(_configuration["EncryptionKey"]!, refreshToken.GetString()!);
+                string encrypted = Utility.Encrypt(_configuration["EncryptionKey"]!, refreshToken.GetString()!);
                 string result = json.GetRawText().Replace(refreshToken.GetString()!, encrypted);
 
                 return ServiceResult<string>.Success(result);
@@ -53,7 +51,7 @@ public class TokenService
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, $"Failed to swap.", "TokenService.Swap()");
+            return ServiceResult<string>.Failure(e, "Failed to swap.", "TokenService.Swap()");
         }
     }
 
@@ -61,7 +59,7 @@ public class TokenService
     {
         try
         {
-            string decrypted = Helpers.Decrypt(_configuration["EncryptionKey"]!, refreshToken);
+            string decrypted = Utility.Decrypt(_configuration["EncryptionKey"]!, refreshToken);
             var data = new Dictionary<string, string>
             {
                 { "grant_type", "refresh_token" },
@@ -77,19 +75,11 @@ public class TokenService
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
-            if (json.TryGetProperty("refresh_token", out var token))
-            {
-                string encrypted = Helpers.Encrypt(_configuration["EncryptionKey"]!, token.GetString()!);
-                string result = json.GetRawText().Replace(token.GetString()!, encrypted);
-
-                return ServiceResult<string>.Success(result);
-            }
-            
-            return ServiceResult<string>.Failure(null, $"No refresh_token property. {json}", "TokenService.Refresh()");
+            return ServiceResult<string>.Success(json.GetRawText());
         }
         catch (Exception e)
         {
-            return ServiceResult<string>.Failure(e, $"Failed to refresh token.", "TokenService.Refresh()");
+            return ServiceResult<string>.Failure(e, "Failed to refresh.", "TokenService.Refresh()");
         }
     }
 }
