@@ -10,11 +10,15 @@ using static AnthemAPI.Common.Constants;
 public class PostsController
 (
     CommentsService commentsService,
+    FeedsService feedsService,
+    FollowersService followersService,
     LikesService likesService,
     PostsService postsService
 ) : ControllerBase
 {
     private readonly CommentsService _commentsService = commentsService;
+    private readonly FeedsService _feedsService = feedsService;
+    private readonly FollowersService _followersService = followersService;
     private readonly LikesService _likesService = likesService;
     private readonly PostsService _postsService = postsService;
 
@@ -23,6 +27,7 @@ public class PostsController
     {
         string userId = User.FindFirstValue("id")!;
 
+        // Save the new Post
         var post = new Post
         {
             UserId = userId,
@@ -34,12 +39,27 @@ public class PostsController
             TotalComments = 0
         };
 
-        var save = await _postsService.Save(post);
+        var savePost = await _postsService.Save(post);
 
-        if (save.IsFailure)
+        if (savePost.IsFailure)
             return StatusCode(500);
         
-        // TODO: add to friends' feeds
+        // Load the User's friends
+        var loadFriends = await _followersService.LoadFriends(userId);
+
+        if (loadFriends.IsFailure)
+            return StatusCode(500);
+        
+        if (loadFriends.Data is not null && loadFriends.Data.Count > 0)
+            return Created();
+        
+        List<string> userIds = loadFriends.Data!.Select(f => f.FollowerUserId).ToList();
+        
+        // Save the Post to all their Feeds
+        var saveFeeds = await _feedsService.SaveAll(userIds, post.Id);
+
+        if (saveFeeds.IsFailure)
+            return StatusCode(500);
 
         return Created();
     }
@@ -62,12 +82,30 @@ public class PostsController
     [HttpDelete("{postId}")]
     public async Task<IActionResult> Delete(string postId)
     {
+        string userId = User.FindFirstValue("id")!;
+
+        // Delete the Post
         var delete = await _postsService.Delete(postId);
 
         if (delete.IsFailure)
             return StatusCode(500);
 
-        // TODO: remove from freinds' feeds
+        // Load the User's friends
+        var loadFriends = await _followersService.LoadFriends(userId);
+
+        if (loadFriends.IsFailure)  
+            return StatusCode(500);
+        
+        if (loadFriends.Data is not null && loadFriends.Data.Count > 0)
+            return NoContent();
+        
+        List<string> userIds = loadFriends.Data!.Select(f => f.FollowerUserId).ToList();
+
+        // Delete the Post from all their Feeds
+        var deleteAll = await _feedsService.DeleteAll(userIds, postId);
+
+        if (deleteAll.IsFailure)
+            return StatusCode(500);
         
         return NoContent();
     }
