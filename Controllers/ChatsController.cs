@@ -87,12 +87,28 @@ public class ChatsController
     [HttpDelete("{chatId}")]
     public async Task<IActionResult> Delete(string chatId)
     {
-        var delete = await _chatsService.Delete(chatId);
-        
-        if (delete.IsFailure)
+        // Load the Chat
+        var loadChat = await _chatsService.Load(chatId);
+
+        if (loadChat.IsFailure)
             return StatusCode(500);
         
-        // TODO: remove chatid from members chatIds lists
+        if (loadChat.Data is null)
+            return NotFound();
+        
+        Chat chat = loadChat.Data;
+
+        // Delete the Chat
+        var deleteChat = await _chatsService.Delete(chatId);
+        
+        if (deleteChat.IsFailure)
+            return StatusCode(500);
+        
+        // Delete the ChatId from the Users lists
+        var deleteChatIds = await _usersService.RemoveChatIdFromAll(chat.UserIds.ToList(), chat.Id);
+
+        if (deleteChatIds.IsFailure)
+            return StatusCode(500);
 
         return NoContent();
     }
