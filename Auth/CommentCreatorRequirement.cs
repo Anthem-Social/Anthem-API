@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-namespace AnthemAPI.Authorization;
+namespace AnthemAPI.Requirements;
 
 public class CommentCreatorRequirement : IAuthorizationRequirement { }
 
