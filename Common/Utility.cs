@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -80,14 +81,14 @@ public static class Utility
         {
             ServiceURL = url
         };
-        var client = new AmazonApiGatewayManagementApiClient(config);
+        using var client = new AmazonApiGatewayManagementApiClient(config);
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         string json = JsonSerializer.Serialize(message, options);
         byte[] bytes = Encoding.UTF8.GetBytes(json);
-        var gone = new List<string>();
+        var gone = new ConcurrentBag<string>();
 
         var posts = connectionIds.Select(async connectionId =>
         {
@@ -98,19 +99,17 @@ public static class Utility
                     ConnectionId = connectionId,
                     Data = new MemoryStream(bytes)
                 });
-
                 Console.WriteLine($"Sending to {connectionId}.");
             }
             catch (GoneException)
             {
                 gone.Add(connectionId);
-
                 Console.WriteLine("Adding " + connectionId + " to gone.");
             }
         });
 
         await Task.WhenAll(posts);
 
-        return gone;
+        return gone.ToList();
     }
 }
