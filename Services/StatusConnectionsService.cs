@@ -62,46 +62,26 @@ public class StatusConnectionsService
             return ServiceResult<StatusConnection>.Failure(e, $"Failed to clear for {userId}.", "StatusConnectionsService.Clear()");
         }
     }
-        // var request = new UpdateItemRequest
-        // {
-        //     TableName = TABLE_NAME,
-        //     Key = new Dictionary<string, AttributeValue>
-        //     {
-        //         { "UserId", new AttributeValue { S = userIds[0] } }
-        //     },
-        //     UpdateExpression = "ADD ConnectionIds :connectionId",
-        //     ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-        //     {
-        //         [":connectionId"] = new AttributeValue { SS = [connectionId] }
-        //     },
-        //     ReturnValues = ReturnValue.UPDATED_NEW
-        // };
-
-        // var response = await _client.UpdateItemAsync(request);
-
-        // Console.WriteLine("Response: \n", JsonSerializer.Serialize(response.Attributes));
-        // return ServiceResult<StatusConnection?>.Success(null);
 
     public async Task<ServiceResult<StatusConnection?>> AddConnectionToAll(List<string> userIds, string connectionId)
     {
-        Console.WriteLine($"Adding {connectionId} to {string.Join(", ", userIds)}.");
         try
         {
             var batches = new List<Task<BatchExecuteStatementResponse>>();
 
             for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT)
             {
-                var ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT).ToList();
+                List<string> ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT).ToList();
                 var batch = new BatchExecuteStatementRequest
                 {
                     Statements = ids.Select(userId => new BatchStatementRequest
                     {
                         Statement = $"UPDATE {TABLE_NAME}" +
-                                    " ADD ConnectionIds ?" +
+                                    " SET ConnectionIds = SET_ADD(ConnectionIds, ?)" +
                                     " WHERE UserId = ?",
                         Parameters = new List<AttributeValue>
                         {
-                            new AttributeValue { SS = [connectionId] },
+                            new AttributeValue { SS = [ connectionId ] },
                             new AttributeValue { S = userId }
                         }
                     }).ToList()
@@ -111,8 +91,6 @@ public class StatusConnectionsService
             }
 
             await Task.WhenAll(batches);
-
-            Console.WriteLine("Result: \n" + JsonSerializer.Serialize(batches[0].Result.Responses[0].Item));
 
             return ServiceResult<StatusConnection?>.Success(null);
         }
