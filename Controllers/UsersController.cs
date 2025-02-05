@@ -126,7 +126,7 @@ public class UsersController
 
     [Authorize(Self)]
     [HttpPost("{userId}/follow/{followeeUserId}")]
-    public async Task<IActionResult> CreateFollower(string userId, string followeeUserId)
+    public async Task<IActionResult> Follow(string userId, string followeeUserId)
     {
         var follower = new Follower
         {
@@ -145,7 +145,7 @@ public class UsersController
 
     [Authorize(Self)]
     [HttpDelete("{userId}/follow/{followeeUserId}")]
-    public async Task<IActionResult> DeleteFollower(string userId, string followeeUserId)
+    public async Task<IActionResult> Unfollow(string userId, string followeeUserId)
     {
         var delete = await _followersService.Delete(followeeUserId, userId);
 
