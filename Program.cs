@@ -1,7 +1,7 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using AnthemAPI.Authentication;
-using AnthemAPI.Authorization;
+using AnthemAPI.Requirements;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Quartz;
@@ -27,6 +27,9 @@ builder.Services.AddHttpClient();
 // Authentication schemes
 builder.Services.AddAuthentication()
     .AddScheme<SpotifyAuthenticationOptions, SpotifyAuthenticationHandler>(Spotify, options => { });
+
+// Remove Spotify Authentication as the default scheme
+AppContext.SetSwitch("Microsoft.AspNetCore.Authentication.SuppressAutoDefaultScheme", true);
 
 // Authorization handlers
 builder.Services.AddScoped<IAuthorizationHandler, ChatCreatorHandler>();
@@ -117,6 +120,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
