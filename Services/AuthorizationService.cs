@@ -9,14 +9,11 @@ namespace AnthemAPI.Services;
 public class AuthorizationsService
 {
     private readonly DynamoDBContext _context;
-    private readonly SpotifyService _spotifyService;
 
     public AuthorizationsService(
-        IAmazonDynamoDB client,
-        SpotifyService spotifyService
+        IAmazonDynamoDB client
     )
     {
-        _spotifyService = spotifyService;
         _context = new DynamoDBContext(client);
     }
 
