@@ -76,7 +76,7 @@ jobs:
           USER: ${{ secrets.USER }}
           ANTHEM_PAT: ${{ secrets.ANTHEM_PAT }}
           VERSION: ${{ needs.build-and-push-image.outputs.version }}
-          IMAGE_NAME: ghcr.io/anthem-social/anthemapi:${{ needs.build-and-push-image.outputs.version }}
+          IMAGE_NAME: ghcr.io/anthem-social/anthem-api:${{ needs.build-and-push-image.outputs.version }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           echo "Updating to image name: ${IMAGE_NAME}"
