@@ -25,7 +25,7 @@ public class PostsController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PostCreate dto)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
 
         // Save the new Post
         var post = new Post
@@ -82,7 +82,7 @@ public class PostsController
     [HttpDelete("{postId}")]
     public async Task<IActionResult> Delete(string postId)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
 
         // Delete the Post
         var delete = await _postsService.Delete(postId);
@@ -113,7 +113,7 @@ public class PostsController
     [HttpPost("{postId}/comments")]
     public async Task<IActionResult> CreateComment(string postId, [FromBody] CommentCreate dto)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
 
         var comment = new Comment
         {
@@ -172,7 +172,7 @@ public class PostsController
     [HttpPost("{postId}/likes")]
     public async Task<IActionResult> CreateLike(string postId)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
         
         var like = new Like
         {

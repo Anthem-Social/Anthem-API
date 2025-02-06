@@ -29,7 +29,7 @@ public class ChatCreatorHandler
             return;
         }
 
-        string userId = context.User.FindFirstValue("id")!;
+        string userId = context.User.FindFirstValue("user_id")!;
         string chatId = c!.ToString()!;
 
         var result = await _chatsService.Load(chatId);

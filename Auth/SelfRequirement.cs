@@ -22,7 +22,7 @@ public class SelfHandler : AuthorizationHandler<SelfRequirement>
             return Task.CompletedTask;
         }
 
-        string claimsUserId = context.User.FindFirstValue("id")!;
+        string claimsUserId = context.User.FindFirstValue("user_id")!;
         string routeUserId = userId!.ToString()!;
 
         if (claimsUserId != routeUserId)

@@ -29,7 +29,7 @@ public class ChatsController
     public async Task<IActionResult> Create([FromBody] ChatCreate dto)
     {
         // Get the creator user
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
         
         // Ensure the members are the user's friends
         var loadFriends = await _followersService.LoadFriends(userId);
@@ -218,7 +218,7 @@ public class ChatsController
     {
         // Make the new Message
         var now = DateTime.UtcNow;
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
         var message = new Message
         {
             ChatId = chatId,
