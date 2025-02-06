@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AnthemAPI.Models;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -77,6 +78,23 @@ public class UsersController
         };
 
         return Ok(data);
+    }
+
+    [Authorize(Self)]
+    [HttpGet("{userId}/claims")]
+    public IActionResult GetClaims(string userId)
+    {
+
+        var claims = new Claims
+        {
+            AccessToken = User.FindFirstValue("access_token")!,
+            Country = User.FindFirstValue("country")!,
+            ExplicitContent = bool.Parse(User.FindFirstValue("explicit_content")!),
+            Premium = bool.Parse(User.FindFirstValue("premium")!),
+            UserId = userId
+        };
+
+        return Ok(claims);
     }
 
     [Authorize(Self)]
