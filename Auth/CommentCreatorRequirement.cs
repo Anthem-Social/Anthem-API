@@ -22,7 +22,7 @@ public class CommentCreatorHandler : AuthorizationHandler<CommentCreatorRequirem
             return Task.CompletedTask;
         }
 
-        string userId = context.User.FindFirstValue("id")!;
+        string userId = context.User.FindFirstValue("user_id")!;
         string commentId = c!.ToString()!;
 
         if (commentId.Split("#")[1] != userId)

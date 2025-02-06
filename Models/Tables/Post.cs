@@ -16,3 +16,10 @@ public class Post
     public required long TotalLikes { get; set; }
     public required long TotalComments { get; set; }
 }
+
+/*
+Since the Id here is used as the Sort key in the Feeds table,
+we append the creator's UserId to the Timestamp to ensure the resulting Feed
+record will be unique. Otherwise we run the risk of a user's two
+friends posting at the exact same time.
+*/

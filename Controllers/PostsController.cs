@@ -13,7 +13,8 @@ public class PostsController
     FeedsService feedsService,
     FollowersService followersService,
     LikesService likesService,
-    PostsService postsService
+    PostsService postsService,
+    UsersService usersService
 ) : ControllerBase
 {
     private readonly CommentsService _commentsService = commentsService;
@@ -21,11 +22,12 @@ public class PostsController
     private readonly FollowersService _followersService = followersService;
     private readonly LikesService _likesService = likesService;
     private readonly PostsService _postsService = postsService;
+    private readonly UsersService _usersService = usersService;
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PostCreate dto)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
 
         // Save the new Post
         var post = new Post
@@ -67,22 +69,51 @@ public class PostsController
     [HttpGet("{postId}")]
     public async Task<IActionResult> Get(string postId)
     {
-        var load = await _postsService.Load(postId);
+        // Load the Post
+        var loadPost = await _postsService.Load(postId);
 
-        if (load.IsFailure)
+        if (loadPost.IsFailure)
             return StatusCode(500);
         
-        if (load.Data is null)
+        if (loadPost.Data is null)
             return NotFound();
         
-        return Ok(load.Data);
+        Post post = loadPost.Data;
+
+        // Load the User
+        var loadUser = await _usersService.Load(post.UserId);
+
+        if (loadUser.IsFailure)
+            return StatusCode(500);
+        
+        if (loadUser.Data is null)
+            return NotFound();
+        
+        User user = loadUser.Data;
+
+        // Create the UserCard
+        var userCard = new UserCard
+        {
+            UserId = user.Id,
+            Nickname = user.Nickname,
+            PictureUrl = user.PictureUrl
+        };
+
+        // Create the PostGet DTO
+        var postGet = new PostGet
+        {
+            Post = post,
+            UserCard = userCard
+        };
+
+        return Ok(postGet);
     }
 
     [Authorize(PostCreator)]
     [HttpDelete("{postId}")]
     public async Task<IActionResult> Delete(string postId)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
 
         // Delete the Post
         var delete = await _postsService.Delete(postId);
@@ -113,7 +144,7 @@ public class PostsController
     [HttpPost("{postId}/comments")]
     public async Task<IActionResult> CreateComment(string postId, [FromBody] CommentCreate dto)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
 
         var comment = new Comment
         {
@@ -138,15 +169,41 @@ public class PostsController
     [HttpGet("{postId}/comments")]
     public async Task<IActionResult> GetComments(string postId, [FromQuery] string? exclusiveStartKey = null)
     {
-        var load = await _commentsService.LoadPage(postId, exclusiveStartKey);
+        // Load the page of Comments
+        var loadComments = await _commentsService.LoadPage(postId, exclusiveStartKey);
 
-        if (load.IsFailure)
+        if (loadComments.IsFailure)
+            return StatusCode(500);
+
+        List<Comment> comments = loadComments.Data.Item1;
+        string? lastEvaluatedKey = loadComments.Data.Item2;
+        List<string> userIds = comments.Select(comment => comment.Id.Split("#")[1]).ToList();
+
+        // Get the UserCards
+        var getUserCards = await _usersService.GetUserCards(userIds);
+
+        if (getUserCards.IsFailure)
             return StatusCode(500);
         
+        List<UserCard> userCards = getUserCards.Data!;
+
+        // Create lookup dictionary
+        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+
+        // Create list of CommentGet DTOs
+        List<CommentGet> commentGets = comments
+            .Select(comment => new CommentGet
+            {
+                Comment = comment,
+                UserCard = dict[comment.Id.Split("#")[1]]
+            })
+            .ToList();
+
+        // Create data to return
         var data = new
         {
-            comments = load.Data.Item1,
-            lastEvaluatedKey = load.Data.Item2
+            comments = commentGets,
+            lastEvaluatedKey
         };
 
         return Ok(data);
@@ -172,7 +229,7 @@ public class PostsController
     [HttpPost("{postId}/likes")]
     public async Task<IActionResult> CreateLike(string postId)
     {
-        string userId = User.FindFirstValue("id")!;
+        string userId = User.FindFirstValue("user_id")!;
         
         var like = new Like
         {
@@ -197,15 +254,41 @@ public class PostsController
     [HttpGet("{postId}/likes")]
     public async Task<IActionResult> GetLikes(string postId, [FromQuery] string? exclusiveStartKey = null)
     {
-        var load = await _likesService.LoadPage(postId, exclusiveStartKey);
+        // Load the page of Likes
+        var loadLikes = await _likesService.LoadPage(postId, exclusiveStartKey);
 
-        if (load.IsFailure)
+        if (loadLikes.IsFailure)
             return StatusCode(500);
         
+        List<Like> likes = loadLikes.Data.Item1;
+        string? lastEvaluatedKey = loadLikes.Data.Item2;
+        List<string> userIds = likes.Select(like => like.UserId).ToList();
+
+        // Get the UserCards
+        var getUserCards = await _usersService.GetUserCards(userIds);
+
+        if (getUserCards.IsFailure)
+            return StatusCode(500);
+        
+        List<UserCard> userCards = getUserCards.Data!;
+
+        // Create lookup dictionary
+        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+
+        // Create list of LikeGet DTOs
+        List<LikeGet> likeGets = likes
+            .Select(like => new LikeGet
+            {
+                Like = like,
+                UserCard = dict[like.UserId]
+            })
+            .ToList();
+
+        // Create data to return
         var data = new
         {
-            likes = load.Data.Item1,
-            lastEvaluatedKey = load.Data.Item2
+            lastEvaluatedKey,
+            likes = likeGets
         };
 
         return Ok(data);

@@ -64,8 +64,8 @@ public class SpotifyAuthenticationHandler : AuthenticationHandler<SpotifyAuthent
                 new Claim("access_token", token),
                 new Claim("country", country),
                 new Claim("explicit_content", explicitContent.ToString()),
-                new Claim("id", id),
-                new Claim("premium", premium.ToString())
+                new Claim("premium", premium.ToString()),
+                new Claim("user_id", id)
             };
 
             var identity = new ClaimsIdentity(claims);

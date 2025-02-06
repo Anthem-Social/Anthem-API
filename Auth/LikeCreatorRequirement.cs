@@ -22,7 +22,7 @@ public class LikeCreatorHandler : AuthorizationHandler<LikeCreatorRequirement>
             return Task.CompletedTask;
         }
 
-        string userId = context.User.FindFirstValue("id")!;
+        string userId = context.User.FindFirstValue("user_id")!;
         string likeId = l!.ToString()!;
 
         if (likeId.Split("#")[1] != userId)

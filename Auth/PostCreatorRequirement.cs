@@ -22,7 +22,7 @@ public class PostCreatorHandler : AuthorizationHandler<PostCreatorRequirement>
             return Task.CompletedTask;
         }
 
-        string userId = context.User.FindFirstValue("id")!;
+        string userId = context.User.FindFirstValue("user_id")!;
         string postId = p!.ToString()!;
 
         if (postId.Split("#")[1] != userId)

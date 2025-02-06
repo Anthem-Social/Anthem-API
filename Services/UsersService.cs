@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
+using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
@@ -265,6 +266,41 @@ public class UsersService
         catch (Exception e)
         {
             return ServiceResult<User?>.Failure(e, $"Failed to update music provider for {userId}.", "UsersService.UpdateMusicProvider()");
+        }
+    }
+
+    public async Task<ServiceResult<List<UserCard>>> GetUserCards(List<string> userIds)
+    {
+        try
+        {
+            var batches = new List<BatchGet<User>>();
+
+            for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_GET_LIMIT)
+            {
+                List<string> ids  = userIds.Skip(i).Take(DYNAMO_DB_BATCH_GET_LIMIT).ToList();
+                var batch = _context.CreateBatchGet<User>();
+                ids.ForEach(batch.AddKey);
+                batches.Add(batch);
+            }
+
+            await _context.ExecuteBatchGetAsync(batches.ToArray());
+
+            List<UserCard> cards = batches
+                .SelectMany(batch => batch.Results)
+                .ToList()
+                .Select(user => new UserCard
+                {
+                    UserId = user.Id,
+                    Nickname = user.Nickname,
+                    PictureUrl = user.PictureUrl
+                })
+                .ToList();
+            
+            return ServiceResult<List<UserCard>>.Success(cards);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<UserCard>>.Failure(e, "Failed to get user cards.", "UsersService.GetUserCards");
         }
     }
 }

@@ -22,7 +22,7 @@ public class MessageCreatorHandler : AuthorizationHandler<MessageCreatorRequirem
             return Task.CompletedTask;
         }
 
-        string userId = context.User.FindFirstValue("id")!;
+        string userId = context.User.FindFirstValue("user_id")!;
         string messageId = m!.ToString()!;
 
         if (messageId.Split("#")[1] != userId)
