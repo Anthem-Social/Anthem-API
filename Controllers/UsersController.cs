@@ -101,15 +101,50 @@ public class UsersController
     [HttpGet("{userId}/feed")]
     public async Task<IActionResult> GetFeed(string userId, [FromBody] string? exclusiveStartKey = null)
     {
-        var load = await _feedsService.LoadPage(userId, exclusiveStartKey);
+        // Load a page of the Feed
+        var loadFeed = await _feedsService.LoadPage(userId, exclusiveStartKey);
 
-        if (load.IsFailure)
+        if (loadFeed.IsFailure)
+            return StatusCode(500);
+
+        List<Feed> feeds = loadFeed.Data.Item1;
+        string? lastEvaluatedKey = loadFeed.Data.Item2;
+        List<string> postIds = feeds.Select(feed => feed.PostId).ToList();
+        
+        // Load the Posts
+        var loadPosts = await _postsService.Load(postIds);
+
+        if (loadPosts.IsFailure)
             return StatusCode(500);
         
+        List<Post> posts = loadPosts.Data!;
+        List<string> userIds = posts.Select(post => post.UserId).ToList();
+
+        // Get the UserCards
+        var getUserCards = await _usersService.GetUserCards(userIds);
+
+        if (getUserCards.IsFailure)
+            return StatusCode(500);
+        
+        List<UserCard> userCards = getUserCards.Data!;
+
+        // Create lookup dictionary
+        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+
+        // Create list of PostGet DTOs
+        List<PostGet> postGets = posts
+            .Select(post => new PostGet
+            {
+                Post = post,
+                UserCard = dict[post.UserId]
+            })
+            .ToList();
+
+        // Create data to return
         var data = new
         {
-            feed = load.Data.Item1,
-            exclusiveStartKey = load.Data.Item2
+            lastEvaluatedKey,
+            posts = postGets
         };
 
         return Ok(data);
@@ -127,16 +162,41 @@ public class UsersController
         if (loadUser.Data is null)
             return NotFound();
         
-        // Load a page of the users that follow them
+        // Load a page of Followers
         var loadFollowers = await _followersService.LoadPageFollowers(userId, exclusiveStartKey);
 
         if (loadFollowers.IsFailure)
             return StatusCode(500);
         
+        List<Follower> followers = loadFollowers.Data.Item1;
+        string? lastEvaluatedKey = loadFollowers.Data.Item2;
+        List<string> userIds = followers.Select(follower => follower.FollowerUserId).ToList();
+
+        // Get the UserCards
+        var getUserCards = await _usersService.GetUserCards(userIds);
+
+        if (getUserCards.IsFailure)
+            return StatusCode(500);
+        
+        List<UserCard> userCards = getUserCards.Data!;
+
+        // Create lookup dictionary
+        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+
+        // Create list of FollowerGet DTOs
+        List<FollowerGet> followerGets = followers
+            .Select(follower => new FollowerGet
+            {
+                Follower = follower,
+                UserCard = dict[follower.FollowerUserId]
+            })
+            .ToList();
+
+        // Create data to return
         var data = new
         {
-            followers = loadFollowers.Data.Item1,
-            exclusiveStartKey = loadFollowers.Data.Item2
+            followers = followerGets,
+            lastEvaluatedKey
         };
         
         return Ok(data);
@@ -185,27 +245,91 @@ public class UsersController
         if (loadUser.Data is null)
             return NotFound();
 
-        // Load a page of the users they follow
+        // Load a page of Followings
         var loadFollowings = await _followersService.LoadPageFollowings(userId, exclusiveStartKey);
 
         if (loadFollowings.IsFailure)
             return StatusCode(500);
 
-        return Ok(loadFollowings.Data.Item1);
+        List<Follower> followings = loadFollowings.Data.Item1;
+        string? lastEvaluatedKey = loadFollowings.Data.Item2;
+        List<string> userIds = followings.Select(follower => follower.UserId).ToList();
+
+        // Get the UserCards
+        var getUserCards = await _usersService.GetUserCards(userIds);
+
+        if (getUserCards.IsFailure)
+            return StatusCode(500);
+        
+        List<UserCard> userCards = getUserCards.Data!;
+
+        // Create lookup dictionary
+        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+
+        // Create list of FollowerGet DTOs
+        List<FollowerGet> followingGets = followings
+            .Select(follower => new FollowerGet
+            {
+                Follower = follower,
+                UserCard = dict[follower.UserId]
+            })
+            .ToList();
+
+        // Create data to return
+        var data = new
+        {
+            followings = followingGets,
+            lastEvaluatedKey
+        };
+        
+        return Ok(data);
     }
 
     [HttpGet("{userId}/posts")]
     public async Task<IActionResult> GetPosts(string userId, [FromQuery] string? exclusiveStartKey = null)
     {
-        var load = await _postsService.LoadPage(userId, exclusiveStartKey);
+        // Load the User
+        var loadUser = await _usersService.Load(userId);
 
-        if (load.IsFailure)
+        if (loadUser.IsFailure)
             return StatusCode(500);
         
+        if (loadUser.Data is null)
+            return NotFound();
+        
+        User user = loadUser.Data;
+
+        // Create the UserCard
+        var userCard = new UserCard
+        {
+            UserId = user.Id,
+            Nickname = user.Nickname,
+            PictureUrl = user.PictureUrl
+        };
+
+        // Load a page of the Posts
+        var loadPosts = await _postsService.LoadPage(userId, exclusiveStartKey);
+
+        if (loadPosts.IsFailure)
+            return StatusCode(500);
+
+        List<Post> posts = loadPosts.Data.Item1;
+        string? lastEvaluatedKey = loadPosts.Data.Item2;
+        
+        // Create list of PostGet DTOs
+        List<PostGet> postGets = posts
+            .Select(post => new PostGet
+            {
+                Post = post,
+                UserCard = userCard
+            })
+            .ToList();
+        
+        // Create the data to return
         var data = new
         {
-            posts = load.Data.Item1,
-            exclusiveStartKey = load.Data.Item2
+            lastEvaluatedKey,
+            posts = postGets
         };
 
         return Ok(data);

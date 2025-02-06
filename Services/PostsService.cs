@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
+using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
@@ -30,6 +31,40 @@ public class PostsService
         catch (Exception e)
         {
             return ServiceResult<Post?>.Failure(e, $"Failed to load {postId}.", "PostsService.Load()");
+        }
+    }
+
+    public async Task<ServiceResult<List<Post>>> Load(List<string> postIds)
+    {
+        try
+        {
+            var batches = new List<BatchGet<Post>>();
+
+            for (int i = 0; i < postIds.Count; i += DYNAMO_DB_BATCH_GET_LIMIT)
+            {
+                List<string> ids  = postIds.Skip(i).Take(DYNAMO_DB_BATCH_GET_LIMIT).ToList();
+                var batch = _context.CreateBatchGet<Post>();
+
+                foreach (string id in ids)
+                {
+                    string userId = id.Split("#")[1];
+                    batch.AddKey(userId, id);
+                }
+
+                batches.Add(batch);
+            }
+
+            await _context.ExecuteBatchGetAsync(batches.ToArray());
+
+            List<Post> posts = batches
+                .SelectMany(batch => batch.Results)
+                .ToList();
+            
+            return ServiceResult<List<Post>>.Success(posts);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Post>>.Failure(e, "Failed to load all.", "PostsService.LoadAll()");
         }
     }
 
