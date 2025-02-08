@@ -20,6 +20,19 @@ public class FollowersService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<Follower?>> Load(string userId, string followerUserId)
+    {
+        try
+        {
+            Follower? follower = await _context.LoadAsync<Follower>(userId, followerUserId);
+            return ServiceResult<Follower?>.Success(follower);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Follower?>.Failure(e, $"Failed for {userId} and {followerUserId}.", "FollowersService.Load()");
+        }
+    }
+
     public async Task<ServiceResult<Follower>> Save(Follower follower)
     {
         try
@@ -206,6 +219,42 @@ public class FollowersService
         catch (Exception e)
         {
             return ServiceResult<List<Follower>>.Failure(e, $"Failed to load for {userId}.", "FollowersService.LoadFriends()");
+        }
+    }
+
+    public async Task<ServiceResult<Relationship>> LoadRelationship(string userIdA, string userIdB)
+    {
+        try
+        {
+            if (userIdA == userIdB)
+                return ServiceResult<Relationship>.Success(Relationship.Self);
+            
+            var load_A_Follows_B = await Load(userIdB, userIdA);
+            var load_B_Follows_A = await Load(userIdA, userIdB);
+
+            if (load_A_Follows_B.IsFailure)
+                return ServiceResult<Relationship>.Failure(load_A_Follows_B.Exception, load_A_Follows_B.ErrorMessage!, load_A_Follows_B.ErrorOrigin!);
+            
+            if (load_B_Follows_A.IsFailure)
+                return ServiceResult<Relationship>.Failure(load_B_Follows_A.Exception, load_B_Follows_A.ErrorMessage!, load_B_Follows_A.ErrorOrigin!);
+            
+            bool A_Follows_B = load_A_Follows_B.Data is not null;
+            bool B_Follows_A = load_B_Follows_A.Data is not null;
+
+            if (A_Follows_B && B_Follows_A)
+                return ServiceResult<Relationship>.Success(Relationship.Mutual);
+            else if (!A_Follows_B && !B_Follows_A)
+                return ServiceResult<Relationship>.Success(Relationship.None);
+            else if (A_Follows_B)
+                return ServiceResult<Relationship>.Success(Relationship.A_Follows_B);
+            else if (B_Follows_A)
+                return ServiceResult<Relationship>.Success(Relationship.B_Follows_A);
+            
+            return ServiceResult<Relationship>.Failure(null, $"Failed to determine relationship.", "FollowersService.LoadRelationship()");
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Relationship>.Failure(e, $"Failed for A: {userIdA}, B: {userIdB}.", "FollowersService.LoadRelationship()");
         }
     }
 }

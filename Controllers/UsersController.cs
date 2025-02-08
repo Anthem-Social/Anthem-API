@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AnthemAPI.Common;
 using AnthemAPI.Models;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -26,9 +27,11 @@ public class UsersController
     private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
     
+    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpGet("{userId}")]
     public async Task<IActionResult> Get(string userId)
     {
+        // Load the User
         var load = await _usersService.Load(userId);
 
         if (load.IsFailure)
@@ -36,8 +39,25 @@ public class UsersController
 
         if (load.Data is null)
             return NotFound();
+        
+        string callerUserId = User.FindFirstValue("user_id")!;
 
-        return Ok(load.Data);
+        // Load the Relationship
+        // User A is the one calling, User B is the one they are calling for
+        var loadRelationship = await _followersService.LoadRelationship(callerUserId, userId);
+
+        if (loadRelationship.IsFailure)
+            return StatusCode(500);
+        
+        Relationship relationship = loadRelationship.Data;
+        
+        var data = new
+        {
+            relationship,
+            user = load.Data
+        };
+
+        return Ok(data);
     }
 
     [Authorize(Self)]
