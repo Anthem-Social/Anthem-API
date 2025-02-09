@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
+using static AnthemAPI.Common.Utility;
 
 namespace AnthemAPI.Services;
 
@@ -74,34 +75,7 @@ public class SpotifyService
                 return ServiceResult<Status?>.Success(null);
             }
 
-            JsonElement albumJson = json.GetProperty("item").GetProperty("album"); 
-            JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
-
-            // Create Album
-            var album = new Album
-            {
-                Uri = albumJson.GetProperty("uri").GetString()!,
-                CoverUrl = albumJson.GetProperty("images")[1].GetProperty("url").GetString()!
-            };
-
-            // Create Artists
-            var artists = artistsJson
-                .EnumerateArray()
-                .Select(artist => new Artist 
-                { 
-                    Uri = artist.GetProperty("uri").GetString()!,
-                    Name = artist.GetProperty("name").GetString()!
-                })
-                .ToList();
-
-            // Create Track
-            var track = new Track
-            {
-                Uri = json.GetProperty("item").GetProperty("uri").GetString()!,
-                Name = json.GetProperty("item").GetProperty("name").GetString()!,
-                Artists = artists,
-                Album = album
-            };
+            Track track = GetTrack(json);
 
             // Create Status
             var status = new Status
@@ -116,6 +90,38 @@ public class SpotifyService
         catch (Exception e)
         {
             return ServiceResult<Status?>.Failure(e, $"Failed to get status for {userId}.", "SpotifyService.GetStatus()");
+        }
+    }
+
+    public async Task<ServiceResult<List<object>>> Search(string accessToken, string query)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.GetAsync($"search?type=album%2Cartist%2Ctrack&q={query}");
+            string content = await response.Content.ReadAsStringAsync();
+            JsonElement json = JsonDocument.Parse(content).RootElement;
+            List<JsonElement> items = json.GetProperty("items").EnumerateArray().ToList();
+            var results = new List<object>();
+
+            foreach (var item in items)
+            {
+                string type = item.GetProperty("type").GetString()!;
+                
+                if (type == "album")
+                    results.Add(GetAlbum(item));
+                else if (type == "artist")
+                    results.Add(GetArtist(item));
+                else if (type == "track")
+                    results.Add(GetTrack(item));
+            }
+
+            return ServiceResult<List<object>>.Success(results);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<object>>.Failure(e, $"Query: {query}.", "SpotifyService.Search()");
         }
     }
 }

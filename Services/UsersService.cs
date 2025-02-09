@@ -166,7 +166,7 @@ public class UsersService
                             M = new Dictionary<string, AttributeValue>
                             {
                                 ["Uri"] = new AttributeValue { S = userUpdate.Anthem.Album.Uri },
-                                ["CoverUrl"] = new AttributeValue { S = userUpdate.Anthem.Album.CoverUrl }
+                                ["ImageUrl"] = new AttributeValue { S = userUpdate.Anthem.Album.ImageUrl }
                             }
                         }
                     }
@@ -224,8 +224,9 @@ public class UsersService
                         }).ToList(),
                         Album = new Album
                         {
+                            Name = response.Attributes["Anthem"].M["Album"].M["Name"].S,
+                            ImageUrl = response.Attributes["Anthem"].M["Album"].M["ImageUrl"].S,
                             Uri = response.Attributes["Anthem"].M["Album"].M["Uri"].S,
-                            CoverUrl = response.Attributes["Anthem"].M["Album"].M["CoverUrl"].S
                         }
                     }
                     : null,
