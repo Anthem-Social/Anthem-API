@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Amazon.ApiGatewayManagementApi;
 using Amazon.ApiGatewayManagementApi.Model;
+using AnthemAPI.Models;
 
 namespace AnthemAPI.Common;
 
@@ -111,5 +112,60 @@ public static class Utility
         await Task.WhenAll(posts);
 
         return gone.ToList();
+    }
+
+    public static Album GetAlbum(JsonElement json)
+    {
+        var album = new Album
+        {
+            ImageUrl = json.GetProperty("images")[0].GetProperty("url").GetString()!,
+            Name = json.GetProperty("name").GetString()!,
+            Uri = json.GetProperty("uri").GetString()!
+        };
+
+        return album;
+    }
+
+    public static Artist GetArtist(JsonElement json)
+    {
+        var artist = new Artist
+        {
+            ImageUrl = json.TryGetProperty("images", out JsonElement images)
+                ? images[0].GetProperty("url").GetString()!
+                : null,
+            Name = json.GetProperty("name").GetString()!,
+            Uri = json.GetProperty("uri").GetString()!
+        };
+
+        return artist;
+    }
+
+    public static Track GetTrack(JsonElement json)
+    {
+        JsonElement albumJson = json.GetProperty("item").GetProperty("album"); 
+        JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
+
+        Album album = GetAlbum(albumJson);
+        
+        Console.WriteLine("Got album: " + JsonSerializer.Serialize(album));
+        
+        List<Artist> artists = artistsJson
+            .EnumerateArray()
+            .Select(GetArtist)
+            .ToList();
+
+        Console.WriteLine("Got artists: " + JsonSerializer.Serialize(artists));
+
+        var track = new Track
+        {
+            Uri = json.GetProperty("item").GetProperty("uri").GetString()!,
+            Name = json.GetProperty("item").GetProperty("name").GetString()!,
+            Artists = artists,
+            Album = album
+        };
+
+        Console.WriteLine("Got track: " + JsonSerializer.Serialize(track));
+
+        return track;
     }
 }
