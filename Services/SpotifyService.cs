@@ -96,59 +96,90 @@ public class SpotifyService
         }
     }
 
-    public async Task<ServiceResult<List<SearchResult>>> Search(string accessToken, string query, string type)
+    public async Task<ServiceResult<List<Album>>> SearchAlbums(string accessToken, string query)
     {
         try
         {
+            string type = "album";
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            HttpResponseMessage response = await _client.GetAsync($"search?limit={SPOTIFY_SEARCH_ITEMS_LIMIT}&q={query}&type={type}");
+            HttpResponseMessage response = await _client.GetAsync($"search?type={type}&limit={SPOTIFY_SEARCH_ITEMS_LIMIT}&q={query}");
 
             if (!response.IsSuccessStatusCode)
-            {
-                return ServiceResult<List<SearchResult>>.Failure(null, $"Error response: {response}", "SpotifyService.Search()");
-            }
+                return ServiceResult<List<Album>>.Failure(null, $"Error response: {response}", "SpotifyService.SearchAlbums()");
 
-            string content = await response.Content.ReadAsStringAsync();
-            
+            string content = await response.Content.ReadAsStringAsync(); 
             JsonElement json = JsonDocument.Parse(content).RootElement;
-            var results = new List<SearchResult>();
+            List<Album> albums = json
+                .GetProperty("albums")
+                .GetProperty("items")
+                .EnumerateArray()
+                .Select(GetAlbum)
+                .ToList();
 
-            // Check for Album results
-            if (json.TryGetProperty("albums", out JsonElement albums))
-            {
-                albums
-                    .GetProperty("items")
-                    .EnumerateArray()
-                    .ToList()
-                    .ForEach(album => results.Add(new SearchResult(GetAlbum(album))));
-            }
-
-            // Check for Artist results
-            if (json.TryGetProperty("artists", out JsonElement artists))
-            {
-                artists
-                    .GetProperty("items")
-                    .EnumerateArray()
-                    .ToList()
-                    .ForEach(artist => results.Add(new SearchResult(GetArtist(artist))));
-            }
-
-            // Check for Track results
-            if (json.TryGetProperty("tracks", out JsonElement tracks))
-            {
-                tracks
-                    .GetProperty("items")
-                    .EnumerateArray()
-                    .ToList()
-                    .ForEach(track => results.Add(new SearchResult(GetTrack(track))));
-            }
-
-            return ServiceResult<List<SearchResult>>.Success(results);
+            return ServiceResult<List<Album>>.Success(albums);
         }
         catch (Exception e)
         {
-            return ServiceResult<List<SearchResult>>.Failure(e, $"Query: {query}.", "SpotifyService.Search()");
+            return ServiceResult<List<Album>>.Failure(e, $"Query: {query}.", "SpotifyService.SearchAlbums()");
+        }
+    }
+
+    public async Task<ServiceResult<List<Artist>>> SearchArtists(string accessToken, string query)
+    {
+        try
+        {
+            string type = "artist";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.GetAsync($"search?type={type}&limit={SPOTIFY_SEARCH_ITEMS_LIMIT}&q={query}");
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<List<Artist>>.Failure(null, $"Error response: {response}", "SpotifyService.SearchArtists()");
+
+            string content = await response.Content.ReadAsStringAsync(); 
+            JsonElement json = JsonDocument.Parse(content).RootElement;
+            List<Artist> artists = json
+                .GetProperty("artists")
+                .GetProperty("items")
+                .EnumerateArray()
+                .Select(GetArtist)
+                .ToList();
+
+            return ServiceResult<List<Artist>>.Success(artists);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Artist>>.Failure(e, $"Query: {query}.", "SpotifyService.SearchArtists()");
+        }
+    }
+
+    public async Task<ServiceResult<List<Track>>> SearchTracks(string accessToken, string query)
+    {
+        try
+        {
+            string type = "track";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.GetAsync($"search?type={type}&limit={SPOTIFY_SEARCH_ITEMS_LIMIT}&q={query}");
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<List<Track>>.Failure(null, $"Error response: {response}", "SpotifyService.SearchTracks()");
+
+            string content = await response.Content.ReadAsStringAsync(); 
+            JsonElement json = JsonDocument.Parse(content).RootElement;
+            List<Track> tracks = json
+                .GetProperty("tracks")
+                .GetProperty("items")
+                .EnumerateArray()
+                .Select(GetTrack)
+                .ToList();
+
+            return ServiceResult<List<Track>>.Success(tracks);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Track>>.Failure(e, $"Query: {query}.", "SpotifyService.SearchTracks()");
         }
     }
 }

@@ -21,6 +21,38 @@ public class SpotifyController
     private readonly TokenService _tokenService = tokenService;
     private readonly UsersService _usersService = usersService;
 
+    [Authorize(AuthenticationSchemes = Spotify)]
+    [HttpGet("albums")]
+    public async Task<IActionResult> SearchAlbums([FromQuery] string query)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var search = await _spotifyService.SearchAlbums(accessToken, query);
+
+        if (search.IsFailure)
+            return StatusCode(500);
+        
+        if (search.Data is null)
+            return NotFound();
+        
+        return Ok(search.Data);
+    }
+
+    [Authorize(AuthenticationSchemes = Spotify)]
+    [HttpGet("artists")]
+    public async Task<IActionResult> SearchArtists([FromQuery] string query)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var search = await _spotifyService.SearchArtists(accessToken, query);
+
+        if (search.IsFailure)
+            return StatusCode(500);
+        
+        if (search.Data is null)
+            return NotFound();
+        
+        return Ok(search.Data);
+    }
+
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromForm] string refreshToken)
     {
@@ -49,22 +81,6 @@ public class SpotifyController
             return StatusCode(500);
 
         return Ok(refresh.Data);
-    }
-
-    [Authorize(AuthenticationSchemes = Spotify)]
-    [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] string type)
-    {
-        string accessToken = User.FindFirstValue("access_token")!;
-        var search = await _spotifyService.Search(accessToken, query, type);
-
-        if (search.IsFailure)
-            return StatusCode(500);
-        
-        if (search.Data is null)
-            return NotFound();
-        
-        return Ok(search.Data);
     }
 
     [HttpPost("swap")]
@@ -101,5 +117,21 @@ public class SpotifyController
             return StatusCode(500);
 
         return Ok(swap.Data);
+    }
+
+    [Authorize(AuthenticationSchemes = Spotify)]
+    [HttpGet("tracks")]
+    public async Task<IActionResult> SearchTracks([FromQuery] string query)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var search = await _spotifyService.SearchTracks(accessToken, query);
+
+        if (search.IsFailure)
+            return StatusCode(500);
+        
+        if (search.Data is null)
+            return NotFound();
+        
+        return Ok(search.Data);
     }
 }
