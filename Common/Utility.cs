@@ -142,29 +142,23 @@ public static class Utility
 
     public static Track GetTrack(JsonElement json)
     {
-        JsonElement albumJson = json.GetProperty("item").GetProperty("album"); 
-        JsonElement artistsJson = json.GetProperty("item").GetProperty("artists");
+        JsonElement albumJson = json.GetProperty("album"); 
+        JsonElement artistsJson = json.GetProperty("artists");
 
         Album album = GetAlbum(albumJson);
-        
-        Console.WriteLine("Got album: " + JsonSerializer.Serialize(album));
-        
+                
         List<Artist> artists = artistsJson
             .EnumerateArray()
             .Select(GetArtist)
             .ToList();
 
-        Console.WriteLine("Got artists: " + JsonSerializer.Serialize(artists));
-
         var track = new Track
         {
-            Uri = json.GetProperty("item").GetProperty("uri").GetString()!,
-            Name = json.GetProperty("item").GetProperty("name").GetString()!,
+            Uri = json.GetProperty("uri").GetString()!,
+            Name = json.GetProperty("name").GetString()!,
             Artists = artists,
             Album = album
         };
-
-        Console.WriteLine("Got track: " + JsonSerializer.Serialize(track));
 
         return track;
     }

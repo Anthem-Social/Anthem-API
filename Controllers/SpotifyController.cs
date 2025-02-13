@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using System.Text.Json;
 using AnthemAPI.Common;
 using AnthemAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static AnthemAPI.Common.Constants;
 
 [ApiController]
 [Route("spotify")]
@@ -48,10 +51,20 @@ public class SpotifyController
         return Ok(refresh.Data);
     }
 
+    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpGet("search")]
-    public async Task<IActionResult> Search()
+    public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] string type)
     {
-        return Ok();
+        string accessToken = User.FindFirstValue("access_token")!;
+        var search = await _spotifyService.Search(accessToken, query, type);
+
+        if (search.IsFailure)
+            return StatusCode(500);
+        
+        if (search.Data is null)
+            return NotFound();
+        
+        return Ok(search.Data);
     }
 
     [HttpPost("swap")]

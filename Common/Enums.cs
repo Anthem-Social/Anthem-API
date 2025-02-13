@@ -24,7 +24,7 @@ public enum MusicProvider
     SpotifyPremium
 }
 
-public enum ResourceType
+public enum SearchResultType
 {
     Track,
     Album,
