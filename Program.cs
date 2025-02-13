@@ -26,7 +26,7 @@ builder.Services.AddHttpClient();
 
 // Authentication schemes
 builder.Services.AddAuthentication()
-    .AddScheme<SpotifyAuthenticationOptions, SpotifyAuthenticationHandler>(Spotify, options => { });
+    .AddScheme<SpotifyAuthenticationOptions, SpotifyAuthenticationHandler>(Spotify, null);
 
 // Remove Spotify Authentication as the default scheme
 AppContext.SetSwitch("Microsoft.AspNetCore.Authentication.SuppressAutoDefaultScheme", true);

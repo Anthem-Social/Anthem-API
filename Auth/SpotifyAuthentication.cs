@@ -68,9 +68,9 @@ public class SpotifyAuthenticationHandler : AuthenticationHandler<SpotifyAuthent
                 new Claim("user_id", id)
             };
 
-            var identity = new ClaimsIdentity(claims);
+            var identity = new ClaimsIdentity(claims, Spotify);
             var principal = new ClaimsPrincipal(identity);
-            var ticket = new AuthenticationTicket(principal, Scheme.Name);
+            var ticket = new AuthenticationTicket(principal, Spotify);
 
             return AuthenticateResult.Success(ticket);
         }
