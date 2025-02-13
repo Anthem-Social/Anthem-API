@@ -23,11 +23,3 @@ public enum MusicProvider
     SpotifyFree,
     SpotifyPremium
 }
-
-public enum SearchResultType
-{
-    Track,
-    Album,
-    Artist,
-    User
-}
