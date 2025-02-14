@@ -224,6 +224,11 @@ public class UsersService
                         }).ToList(),
                         Album = new Album
                         {
+                            Artists = response.Attributes["Anthem"].M["Album"].M["Artists"].L.Select(artist => new Artist
+                            {
+                                Name = artist.M["Name"].S,
+                                Uri = artist.M["Uri"].S
+                            }).ToList(),
                             Name = response.Attributes["Anthem"].M["Album"].M["Name"].S,
                             ImageUrl = response.Attributes["Anthem"].M["Album"].M["ImageUrl"].S,
                             Uri = response.Attributes["Anthem"].M["Album"].M["Uri"].S,

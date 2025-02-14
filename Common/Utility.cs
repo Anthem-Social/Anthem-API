@@ -116,8 +116,16 @@ public static class Utility
 
     public static Album GetAlbum(JsonElement json)
     {
+        JsonElement artistsJson = json.GetProperty("artists");
+
+        List<Artist> artists = artistsJson
+            .EnumerateArray()
+            .Select(GetArtist)
+            .ToList();
+        
         var album = new Album
         {
+            Artists = artists,
             ImageUrl = json.GetProperty("images")[0].GetProperty("url").GetString()!,
             Name = json.GetProperty("name").GetString()!,
             Uri = json.GetProperty("uri").GetString()!
