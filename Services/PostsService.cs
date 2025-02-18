@@ -127,11 +127,11 @@ public class PostsService
                 {
                     UserId = post["UserId"].S,
                     Id = post["Id"].S,
+                    Caption = post.ContainsKey("Caption")
+                        ? post["Caption"].S
+                        : null,
                     ContentType = (ContentType) int.Parse(post["ContentType"].N),
                     Content = post["Content"].S,
-                    Text = post.ContainsKey("Text")
-                        ? post["Text"].S
-                        : null,
                     TotalLikes = long.Parse(post["TotalLikes"].N),
                     TotalComments = long.Parse(post["TotalComments"].N)
                 })

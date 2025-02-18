@@ -24,6 +24,7 @@ public class PostsController
     private readonly PostsService _postsService = postsService;
     private readonly UsersService _usersService = usersService;
 
+    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PostCreate dto)
     {
@@ -36,7 +37,7 @@ public class PostsController
             Id = $"{DateTime.UtcNow:o}#{userId}",
             ContentType = dto.ContentType,
             Content = dto.Content,
-            Text = dto.Text,
+            Caption = dto.Caption,
             TotalLikes = 0,
             TotalComments = 0
         };

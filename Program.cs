@@ -108,7 +108,11 @@ builder.Services.AddScoped<UsersService>();
 builder.Services.AddQuartz();
 builder.Services.AddQuartzHostedService();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
