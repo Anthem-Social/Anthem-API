@@ -138,7 +138,7 @@ public class UsersController
             return StatusCode(500);
         
         List<Post> posts = loadPosts.Data!;
-        List<string> userIds = posts.Select(post => post.UserId).ToList();
+        HashSet<string> userIds = posts.Select(post => post.UserId).ToHashSet();
 
         // Get the UserCards
         var getUserCards = await _usersService.GetUserCards(userIds);
@@ -190,7 +190,7 @@ public class UsersController
         
         List<Follower> followers = loadFollowers.Data.Item1;
         string? lastEvaluatedKey = loadFollowers.Data.Item2;
-        List<string> userIds = followers.Select(follower => follower.FollowerUserId).ToList();
+        HashSet<string> userIds = followers.Select(follower => follower.FollowerUserId).ToHashSet();
 
         // Get the UserCards
         var getUserCards = await _usersService.GetUserCards(userIds);
@@ -273,7 +273,7 @@ public class UsersController
 
         List<Follower> followings = loadFollowings.Data.Item1;
         string? lastEvaluatedKey = loadFollowings.Data.Item2;
-        List<string> userIds = followings.Select(follower => follower.UserId).ToList();
+        HashSet<string> userIds = followings.Select(follower => follower.UserId).ToHashSet();
 
         // Get the UserCards
         var getUserCards = await _usersService.GetUserCards(userIds);

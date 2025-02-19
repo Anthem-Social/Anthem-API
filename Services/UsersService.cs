@@ -275,7 +275,7 @@ public class UsersService
         }
     }
 
-    public async Task<ServiceResult<List<UserCard>>> GetUserCards(List<string> userIds)
+    public async Task<ServiceResult<List<UserCard>>> GetUserCards(HashSet<string> userIds)
     {
         try
         {

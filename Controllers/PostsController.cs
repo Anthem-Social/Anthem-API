@@ -53,7 +53,7 @@ public class PostsController
         if (loadFriends.IsFailure)
             return StatusCode(500);
         
-        if (loadFriends.Data is not null && loadFriends.Data.Count > 0)
+        if (loadFriends.Data is null || loadFriends.Data.Count == 0)
             return Created();
         
         List<string> userIds = loadFriends.Data!.Select(f => f.FollowerUserId).ToList();
@@ -178,7 +178,7 @@ public class PostsController
 
         List<Comment> comments = loadComments.Data.Item1;
         string? lastEvaluatedKey = loadComments.Data.Item2;
-        List<string> userIds = comments.Select(comment => comment.Id.Split("#")[1]).ToList();
+        HashSet<string> userIds = comments.Select(comment => comment.Id.Split("#")[1]).ToHashSet();
 
         // Get the UserCards
         var getUserCards = await _usersService.GetUserCards(userIds);
@@ -263,7 +263,7 @@ public class PostsController
         
         List<Like> likes = loadLikes.Data.Item1;
         string? lastEvaluatedKey = loadLikes.Data.Item2;
-        List<string> userIds = likes.Select(like => like.UserId).ToList();
+        HashSet<string> userIds = likes.Select(like => like.UserId).ToHashSet();
 
         // Get the UserCards
         var getUserCards = await _usersService.GetUserCards(userIds);
