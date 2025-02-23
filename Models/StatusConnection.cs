@@ -7,3 +7,9 @@ public class StatusConnection
     public required string UserId { get; set; }
     public required HashSet<string> ConnectionIds { get; set; }
 }
+
+public class StatusConnectionCreate
+{
+    public required string ConnectionId { get; set; }
+    public required string UserId { get; set; }
+}

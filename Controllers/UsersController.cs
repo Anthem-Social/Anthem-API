@@ -140,23 +140,23 @@ public class UsersController
         List<Post> posts = loadPosts.Data!;
         HashSet<string> userIds = posts.Select(post => post.UserId).ToHashSet();
 
-        // Get the UserCards
-        var getUserCards = await _usersService.GetUserCards(userIds);
+        // Get the Cards
+        var getCards = await _usersService.GetCards(userIds);
 
-        if (getUserCards.IsFailure)
+        if (getCards.IsFailure)
             return StatusCode(500);
         
-        List<UserCard> userCards = getUserCards.Data!;
+        List<Card> cards = getCards.Data!;
 
         // Create lookup dictionary
-        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+        Dictionary<string, Card> dict = cards.ToDictionary(card => card.UserId);
 
-        // Create list of PostGet DTOs
-        List<PostGet> postGets = posts
-            .Select(post => new PostGet
+        // Create list of PostCard DTOs
+        List<PostCard> postCards = posts
+            .Select(post => new PostCard
             {
-                Post = post,
-                UserCard = dict[post.UserId]
+                Card = dict[post.UserId],
+                Post = post
             })
             .ToList();
 
@@ -164,7 +164,7 @@ public class UsersController
         var data = new
         {
             lastEvaluatedKey,
-            posts = postGets
+            posts = postCards
         };
 
         return Ok(data);
@@ -192,30 +192,30 @@ public class UsersController
         string? lastEvaluatedKey = loadFollowers.Data.Item2;
         HashSet<string> userIds = followers.Select(follower => follower.FollowerUserId).ToHashSet();
 
-        // Get the UserCards
-        var getUserCards = await _usersService.GetUserCards(userIds);
+        // Get the Cards
+        var getCards = await _usersService.GetCards(userIds);
 
-        if (getUserCards.IsFailure)
+        if (getCards.IsFailure)
             return StatusCode(500);
         
-        List<UserCard> userCards = getUserCards.Data!;
+        List<Card> cards = getCards.Data!;
 
         // Create lookup dictionary
-        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+        Dictionary<string, Card> dict = cards.ToDictionary(card => card.UserId);
 
-        // Create list of FollowerGet DTOs
-        List<FollowerGet> followerGets = followers
-            .Select(follower => new FollowerGet
+        // Create list of FollowerCards
+        List<FollowerCard> followerCards = followers
+            .Select(follower => new FollowerCard
             {
-                Follower = follower,
-                UserCard = dict[follower.FollowerUserId]
+                Card = dict[follower.FollowerUserId],
+                Follower = follower
             })
             .ToList();
 
         // Create data to return
         var data = new
         {
-            followers = followerGets,
+            followers = followerCards,
             lastEvaluatedKey
         };
         
@@ -275,30 +275,30 @@ public class UsersController
         string? lastEvaluatedKey = loadFollowings.Data.Item2;
         HashSet<string> userIds = followings.Select(follower => follower.UserId).ToHashSet();
 
-        // Get the UserCards
-        var getUserCards = await _usersService.GetUserCards(userIds);
+        // Get the Cards
+        var getCards = await _usersService.GetCards(userIds);
 
-        if (getUserCards.IsFailure)
+        if (getCards.IsFailure)
             return StatusCode(500);
         
-        List<UserCard> userCards = getUserCards.Data!;
+        List<Card> cards = getCards.Data!;
 
         // Create lookup dictionary
-        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+        Dictionary<string, Card> dict = cards.ToDictionary(card => card.UserId);
 
-        // Create list of FollowerGet DTOs
-        List<FollowerGet> followingGets = followings
-            .Select(follower => new FollowerGet
+        // Create list of FollowerCard
+        List<FollowerCard> followerCards = followings
+            .Select(follower => new FollowerCard
             {
-                Follower = follower,
-                UserCard = dict[follower.UserId]
+                Card = dict[follower.UserId],
+                Follower = follower
             })
             .ToList();
 
         // Create data to return
         var data = new
         {
-            followings = followingGets,
+            followings = followerCards,
             lastEvaluatedKey
         };
         
@@ -319,8 +319,8 @@ public class UsersController
         
         User user = loadUser.Data;
 
-        // Create the UserCard
-        var userCard = new UserCard
+        // Create the Card
+        var card = new Card
         {
             UserId = user.Id,
             Nickname = user.Nickname,
@@ -336,12 +336,12 @@ public class UsersController
         List<Post> posts = loadPosts.Data.Item1;
         string? lastEvaluatedKey = loadPosts.Data.Item2;
         
-        // Create list of PostGet DTOs
-        List<PostGet> postGets = posts
-            .Select(post => new PostGet
+        // Create list of PostCard DTOs
+        List<PostCard> postCards = posts
+            .Select(post => new PostCard
             {
-                Post = post,
-                UserCard = userCard
+                Card = card,
+                Post = post
             })
             .ToList();
         
@@ -349,7 +349,7 @@ public class UsersController
         var data = new
         {
             lastEvaluatedKey,
-            posts = postGets
+            postCards
         };
 
         return Ok(data);

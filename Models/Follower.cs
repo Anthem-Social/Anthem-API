@@ -13,3 +13,9 @@ public class Follower
     public required string FollowerUserId { get; set; }
     public required DateTime CreatedAt { get; set; }
 }
+
+public class FollowerCard
+{
+    public required Card Card { get; set; }
+    public required Follower Follower { get; set; }
+}

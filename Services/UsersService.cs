@@ -275,7 +275,7 @@ public class UsersService
         }
     }
 
-    public async Task<ServiceResult<List<UserCard>>> GetUserCards(HashSet<string> userIds)
+    public async Task<ServiceResult<List<Card>>> GetCards(HashSet<string> userIds)
     {
         try
         {
@@ -291,10 +291,10 @@ public class UsersService
 
             await _context.ExecuteBatchGetAsync(batches.ToArray());
 
-            List<UserCard> cards = batches
+            List<Card> cards = batches
                 .SelectMany(batch => batch.Results)
                 .ToList()
-                .Select(user => new UserCard
+                .Select(user => new Card
                 {
                     UserId = user.Id,
                     Nickname = user.Nickname,
@@ -302,11 +302,11 @@ public class UsersService
                 })
                 .ToList();
             
-            return ServiceResult<List<UserCard>>.Success(cards);
+            return ServiceResult<List<Card>>.Success(cards);
         }
         catch (Exception e)
         {
-            return ServiceResult<List<UserCard>>.Failure(e, "Failed to get user cards.", "UsersService.GetUserCards");
+            return ServiceResult<List<Card>>.Failure(e, "Failed to get cards.", "UsersService.GetCards");
         }
     }
 }

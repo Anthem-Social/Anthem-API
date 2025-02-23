@@ -11,3 +11,14 @@ public class Comment
     public required string Id { get; set; } // $"{CreatedAt:o}#{UserId}"
     public required string Text { get; set; }
 }
+
+public class CommentCard
+{
+    public required Card Card { get; set; }
+    public required Comment Comment { get; set; }
+}
+
+public class CommentCreate
+{
+    public required string Text { get; set; }
+}

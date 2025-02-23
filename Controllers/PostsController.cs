@@ -92,22 +92,22 @@ public class PostsController
         
         User user = loadUser.Data;
 
-        // Create the UserCard
-        var userCard = new UserCard
+        // Create the Card
+        var card = new Card
         {
             UserId = user.Id,
             Nickname = user.Nickname,
             PictureUrl = user.PictureUrl
         };
 
-        // Create the PostGet DTO
-        var postGet = new PostGet
+        // Create the PostCard DTO
+        var postCard = new PostCard
         {
             Post = post,
-            UserCard = userCard
+            Card = card
         };
 
-        return Ok(postGet);
+        return Ok(postCard);
     }
 
     [Authorize(PostCreator)]
@@ -180,30 +180,30 @@ public class PostsController
         string? lastEvaluatedKey = loadComments.Data.Item2;
         HashSet<string> userIds = comments.Select(comment => comment.Id.Split("#")[1]).ToHashSet();
 
-        // Get the UserCards
-        var getUserCards = await _usersService.GetUserCards(userIds);
+        // Get the Cards
+        var getCards = await _usersService.GetCards(userIds);
 
-        if (getUserCards.IsFailure)
+        if (getCards.IsFailure)
             return StatusCode(500);
         
-        List<UserCard> userCards = getUserCards.Data!;
+        List<Card> cards = getCards.Data!;
 
         // Create lookup dictionary
-        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+        Dictionary<string, Card> dict = cards.ToDictionary(card => card.UserId);
 
-        // Create list of CommentGet DTOs
-        List<CommentGet> commentGets = comments
-            .Select(comment => new CommentGet
+        // Create list of CommentCard DTOs
+        List<CommentCard> commentCards = comments
+            .Select(comment => new CommentCard
             {
-                Comment = comment,
-                UserCard = dict[comment.Id.Split("#")[1]]
+                Card = dict[comment.Id.Split("#")[1]],
+                Comment = comment
             })
             .ToList();
 
         // Create data to return
         var data = new
         {
-            comments = commentGets,
+            comments = commentCards,
             lastEvaluatedKey
         };
 
@@ -265,23 +265,23 @@ public class PostsController
         string? lastEvaluatedKey = loadLikes.Data.Item2;
         HashSet<string> userIds = likes.Select(like => like.UserId).ToHashSet();
 
-        // Get the UserCards
-        var getUserCards = await _usersService.GetUserCards(userIds);
+        // Get the Cards
+        var getCards = await _usersService.GetCards(userIds);
 
-        if (getUserCards.IsFailure)
+        if (getCards.IsFailure)
             return StatusCode(500);
         
-        List<UserCard> userCards = getUserCards.Data!;
+        List<Card> cards = getCards.Data!;
 
         // Create lookup dictionary
-        Dictionary<string, UserCard> dict = userCards.ToDictionary(card => card.UserId);
+        Dictionary<string, Card> dict = cards.ToDictionary(card => card.UserId);
 
-        // Create list of LikeGet DTOs
-        List<LikeGet> likeGets = likes
-            .Select(like => new LikeGet
+        // Create list of LikeCards DTOs
+        List<LikeCard> likeCards = likes
+            .Select(like => new LikeCard
             {
-                Like = like,
-                UserCard = dict[like.UserId]
+                Card = dict[like.UserId],
+                Like = like
             })
             .ToList();
 
@@ -289,7 +289,7 @@ public class PostsController
         var data = new
         {
             lastEvaluatedKey,
-            likes = likeGets
+            likes = likeCards
         };
 
         return Ok(data);

@@ -1,6 +1,6 @@
 namespace AnthemAPI.Models;
 
-public class UserCard
+public class Card
 {
     public required string UserId { get; set; }
     public string? Nickname { get; set; }

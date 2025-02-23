@@ -1,5 +1,4 @@
 using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
 using AnthemAPI.Authentication;
 using AnthemAPI.Requirements;
 using AnthemAPI.Services;
@@ -19,7 +18,6 @@ builder.Configuration.AddSystemsManager(c =>
 
 // AWS services
 builder.Services.AddAWSService<IAmazonDynamoDB>();
-builder.Services.AddScoped<DynamoDBContext>();
 
 // HTTP client factory
 builder.Services.AddHttpClient();

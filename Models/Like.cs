@@ -15,3 +15,15 @@ public class Like
     [DynamoDBGlobalSecondaryIndexHashKey("UserId-index")]
     public required string UserId { get; set; }
 }
+
+public class LikeCard
+{
+    public required Card Card { get; set; }
+    public required Like Like { get; set; }
+}
+
+public class LikeDelete
+{
+    public required string PostId { get; set; }
+    public required string Id { get; set; }
+}

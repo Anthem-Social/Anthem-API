@@ -13,3 +13,15 @@ public class Message
     public required ContentType ContentType { get; set; }
     public required string Content { get; set; }
 }
+
+public class MessageCard
+{
+    public required Card Card { get; set; }
+    public required Message Message { get; set; }
+}
+
+public class MessageCreate
+{
+    public required ContentType ContentType { get; set; }
+    public required string Content { get; set; }
+}

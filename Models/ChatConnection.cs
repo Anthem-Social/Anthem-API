@@ -7,3 +7,9 @@ public class ChatConnection
     public required string ChatId { get; set; }
     public required HashSet<string> ConnectionIds { get; set; }
 }
+
+public class ChatConnectionCreate
+{
+    public required string ConnectionId { get; set; }
+    public required string ChatId { get; set; }
+}

@@ -15,3 +15,11 @@ public class User
     public Track? Anthem { get; set; }
     public required HashSet<string> ChatIds { get; set; }
 }
+
+public class UserUpdate
+{
+    public string? Nickname { get; set; }
+    public string? PictureUrl { get; set; }
+    public string? Bio { get; set; }
+    public Track? Anthem { get; set; }
+}
