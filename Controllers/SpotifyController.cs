@@ -4,7 +4,6 @@ using AnthemAPI.Common;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using static AnthemAPI.Common.Constants;
 
 [ApiController]
 [Route("spotify")]
@@ -21,7 +20,6 @@ public class SpotifyController
     private readonly TokenService _tokenService = tokenService;
     private readonly UsersService _usersService = usersService;
 
-    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpGet("albums")]
     public async Task<IActionResult> SearchAlbums([FromQuery] string query)
     {
@@ -37,7 +35,6 @@ public class SpotifyController
         return Ok(search.Data);
     }
 
-    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpGet("artists")]
     public async Task<IActionResult> SearchArtists([FromQuery] string query)
     {
@@ -53,6 +50,7 @@ public class SpotifyController
         return Ok(search.Data);
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromForm] string refreshToken)
     {
@@ -83,6 +81,7 @@ public class SpotifyController
         return Ok(refresh.Data);
     }
 
+    [AllowAnonymous]
     [HttpPost("swap")]
     public async Task<IActionResult> Swap([FromForm] string code)
     {
@@ -119,7 +118,6 @@ public class SpotifyController
         return Ok(swap.Data);
     }
 
-    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpGet("tracks")]
     public async Task<IActionResult> SearchTracks([FromQuery] string query)
     {

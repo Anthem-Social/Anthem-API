@@ -1,5 +1,6 @@
 using AnthemAPI.Models;
 using AnthemAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -19,6 +20,7 @@ public class ConnectionController
     private readonly StatusJobService _statusJobService = statusJobService;
     private readonly UsersService _usersService = usersService;
 
+    [AllowAnonymous]
     [HttpPost("chat")]
     public async void CreateChatConnection([FromBody] ChatConnectionCreate dto)
     {
@@ -27,7 +29,8 @@ public class ConnectionController
         Console.WriteLine("ChatId: " + dto.ChatId);
         await _chatConnectionsService.AddConnection(dto.ChatId, dto.ConnectionId);
     }
-
+    
+    [AllowAnonymous]
     [HttpPost("status")]
     public async void CreateStatusConnection([FromBody] StatusConnectionCreate dto)
     {

@@ -27,7 +27,6 @@ public class UsersController
     private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
     
-    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpGet("{userId}")]
     public async Task<IActionResult> Get(string userId)
     {

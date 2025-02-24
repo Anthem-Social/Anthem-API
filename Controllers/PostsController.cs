@@ -24,7 +24,6 @@ public class PostsController
     private readonly PostsService _postsService = postsService;
     private readonly UsersService _usersService = usersService;
 
-    [Authorize(AuthenticationSchemes = Spotify)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PostCreate dto)
     {
@@ -249,7 +248,11 @@ public class PostsController
         if (increment.IsFailure)
             return StatusCode(500);
         
-        return Created();
+        return CreatedAtAction(
+            nameof(DeleteLike),
+            new { likeId = like.Id, postId },
+            like
+        );
     }
 
     [HttpGet("{postId}/likes")]

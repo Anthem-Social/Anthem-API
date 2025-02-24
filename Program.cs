@@ -22,12 +22,9 @@ builder.Services.AddAWSService<IAmazonDynamoDB>();
 // HTTP client factory
 builder.Services.AddHttpClient();
 
-// Authentication schemes
+// Authentication schemes, SpotifyAuthentication becomes the default scheme
 builder.Services.AddAuthentication()
     .AddScheme<SpotifyAuthenticationOptions, SpotifyAuthenticationHandler>(Spotify, null);
-
-// Remove Spotify Authentication as the default scheme
-AppContext.SetSwitch("Microsoft.AspNetCore.Authentication.SuppressAutoDefaultScheme", true);
 
 // Authorization handlers
 builder.Services.AddScoped<IAuthorizationHandler, ChatCreatorHandler>();
