@@ -27,6 +27,7 @@ public class Post
 public class PostCard
 {
     public required Card Card { get; set; }
+    public Like? Like { get; set; }
     public required Post Post { get; set; }
 }
 

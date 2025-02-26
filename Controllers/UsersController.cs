@@ -15,6 +15,7 @@ public class UsersController
     ChatsService chatsService,
     FeedsService feedsService,
     FollowersService followersService,
+    LikesService likesService,
     PostsService postsService,
     StatusesService statusesService,
     UsersService usersService
@@ -23,6 +24,7 @@ public class UsersController
     private readonly ChatsService _chatsService = chatsService;
     private readonly FeedsService _feedsService = feedsService;
     private readonly FollowersService _followersService = followersService;
+    private readonly LikesService _likesService = likesService;
     private readonly PostsService _postsService = postsService;
     private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
@@ -139,6 +141,17 @@ public class UsersController
         List<Post> posts = loadPosts.Data!;
         HashSet<string> userIds = posts.Select(post => post.UserId).ToHashSet();
 
+        // Check if the User has liked any of these Posts
+        var getLikes = await _likesService.Load(postIds, userId);
+
+        if (getLikes.IsFailure)
+            return StatusCode(500);
+        
+        List<Like?> likes = getLikes.Data!;
+
+        // Create Like lookup by PostId
+        Dictionary<string, Like?> likesDict = likes.ToDictionary(like => like!.PostId);
+
         // Get the Cards
         var getCards = await _usersService.GetCards(userIds);
 
@@ -147,17 +160,18 @@ public class UsersController
         
         List<Card> cards = getCards.Data!;
 
-        // Create lookup dictionary
-        Dictionary<string, Card> dict = cards.ToDictionary(card => card.UserId);
+        // Create Card lookup by UserId
+        Dictionary<string, Card> cardsDict = cards.ToDictionary(card => card.UserId);
 
-        // Create list of PostCard DTOs
+        // Create list of PostCards
         List<PostCard> postCards = posts
             .Select(post => new PostCard
             {
-                Card = dict[post.UserId],
+                Card = cardsDict[post.UserId],
+                Like = likesDict.TryGetValue(post.Id, out var like) ? like : null,
                 Post = post
             })
-            .ToList();
+            .ToList();        
 
         // Create data to return
         var data = new
