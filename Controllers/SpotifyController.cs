@@ -20,7 +20,55 @@ public class SpotifyController
     private readonly TokenService _tokenService = tokenService;
     private readonly UsersService _usersService = usersService;
 
-    [HttpGet("albums")]
+    [HttpPut("save/album/{id}")]
+    public async Task<IActionResult> SaveAlbum(string id)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var save = await _spotifyService.SaveTrack(accessToken, id);
+
+        if (save.IsFailure)
+            return StatusCode(500);
+        
+        return NoContent();
+    }
+
+    [HttpDelete("save/album/{id}")]
+    public async Task<IActionResult> UnsaveAlbum(string id)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var unsave = await _spotifyService.UnsaveTrack(accessToken, id);
+
+        if (unsave.IsFailure)
+            return StatusCode(500);
+        
+        return NoContent();
+    }
+
+    [HttpPut("save/track/{id}")]
+    public async Task<IActionResult> SaveTrack(string id)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var save = await _spotifyService.SaveTrack(accessToken, id);
+
+        if (save.IsFailure)
+            return StatusCode(500);
+        
+        return NoContent();
+    }
+
+    [HttpDelete("save/track/{id}")]
+    public async Task<IActionResult> UnsaveTrack(string id)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var unsave = await _spotifyService.UnsaveTrack(accessToken, id);
+
+        if (unsave.IsFailure)
+            return StatusCode(500);
+        
+        return NoContent();
+    }
+
+    [HttpGet("search/albums")]
     public async Task<IActionResult> SearchAlbums([FromQuery] string query)
     {
         string accessToken = User.FindFirstValue("access_token")!;
@@ -35,7 +83,7 @@ public class SpotifyController
         return Ok(search.Data);
     }
 
-    [HttpGet("artists")]
+    [HttpGet("search/artists")]
     public async Task<IActionResult> SearchArtists([FromQuery] string query)
     {
         string accessToken = User.FindFirstValue("access_token")!;
@@ -50,8 +98,23 @@ public class SpotifyController
         return Ok(search.Data);
     }
 
+    [HttpGet("search/tracks")]
+    public async Task<IActionResult> SearchTracks([FromQuery] string query)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        var search = await _spotifyService.SearchTracks(accessToken, query);
+
+        if (search.IsFailure)
+            return StatusCode(500);
+        
+        if (search.Data is null)
+            return NotFound();
+        
+        return Ok(search.Data);
+    }
+
     [AllowAnonymous]
-    [HttpPost("refresh")]
+    [HttpPost("token/refresh")]
     public async Task<IActionResult> Refresh([FromForm] string refreshToken)
     {
         // Refresh the access token
@@ -82,7 +145,7 @@ public class SpotifyController
     }
 
     [AllowAnonymous]
-    [HttpPost("swap")]
+    [HttpPost("token/swap")]
     public async Task<IActionResult> Swap([FromForm] string code)
     {
         // Swap for an access token
@@ -116,20 +179,5 @@ public class SpotifyController
             return StatusCode(500);
 
         return Ok(swap.Data);
-    }
-
-    [HttpGet("tracks")]
-    public async Task<IActionResult> SearchTracks([FromQuery] string query)
-    {
-        string accessToken = User.FindFirstValue("access_token")!;
-        var search = await _spotifyService.SearchTracks(accessToken, query);
-
-        if (search.IsFailure)
-            return StatusCode(500);
-        
-        if (search.Data is null)
-            return NotFound();
-        
-        return Ok(search.Data);
     }
 }

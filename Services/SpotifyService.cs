@@ -96,6 +96,92 @@ public class SpotifyService
         }
     }
 
+    public async Task<ServiceResult<bool>> SaveAlbum(string accessToken, string id)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var data = new
+            {
+                ids = new List<string>() { id }
+            };
+
+            HttpResponseMessage response = await _client.PutAsync("me/albums", JsonContent.Create(data));
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<bool>.Failure(null, $"Error response: {response}", "SpotifyService.SaveAlbum()");
+
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, "Failed to save album.", "SpotifyService.SaveAlbum()");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> UnsaveAlbum(string accessToken, string id)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.DeleteAsync($"me/albums?ids={id}");
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<bool>.Failure(null, $"Error response: {response}", "SpotifyService.UnsaveAlbum()");
+
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, "Failed to unsave album.", "SpotifyService.UnsaveAlbum()");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> SaveTrack(string accessToken, string id)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var data = new
+            {
+                ids = new List<string>() { id }
+            };
+
+            HttpResponseMessage response = await _client.PutAsync("me/tracks", JsonContent.Create(data));
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<bool>.Failure(null, $"Error response: {response}", "SpotifyService.SaveTrack()");
+
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, "Failed to save track.", "SpotifyService.SaveTrack()");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> UnsaveTrack(string accessToken, string id)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage response = await _client.DeleteAsync($"me/tracks?ids={id}");
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<bool>.Failure(null, $"Error response: {response}", "SpotifyService.UnsaveTrack()");
+
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, "Failed to unsave track.", "SpotifyService.UnsaveTrack()");
+        }
+    }
+
     public async Task<ServiceResult<List<Album>>> SearchAlbums(string accessToken, string query)
     {
         try
