@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
@@ -20,32 +21,41 @@ public class LikesService
         _context = new DynamoDBContext(client);
     }
 
-    public async Task<ServiceResult<Like?>> Load(string userId, string postId)
+    public async Task<ServiceResult<List<Like?>>> Load(List<string> postIds, string userId)
     {
-        var query = new QueryOperationConfig
+        try
         {
-            IndexName = "UserId-index",
-            KeyExpression = new Expression
+            var tasks = postIds.Select(async postId =>
             {
-                ExpressionStatement = "UserId = :userId AND PostId = :postId",
-                ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
+                var query = new QueryOperationConfig
                 {
-                    { ":userId", userId },
-                    { ":postId", postId }
-                }
-            }
-        };
+                    IndexName = "UserId-index",
+                    KeyExpression = new Expression
+                    {
+                        ExpressionStatement = $"UserId = :userId AND PostId = :postId",
+                        ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
+                        {
+                            { ":userId", userId },
+                            { ":postId", postId }
+                        }
+                    }
+                };
 
-        var search = _context.FromQueryAsync<Like>(query);
-        var results = await search.GetRemainingAsync();
+                var search = _context.FromQueryAsync<Like>(query);
+                var get = await search.GetRemainingAsync();
+                return get.FirstOrDefault();
+            });
 
-        if (results.Count == 0)
-            return ServiceResult<Like?>.Success(null);
-
-        if (results.Count > 1)
-            return ServiceResult<Like?>.Failure(null, "More than one result.", "LikesService.Load()");
-        
-        return ServiceResult<Like?>.Success(results[0]);
+            var results = await Task.WhenAll(tasks);
+            List<Like> likes = results.Where(result => result is not null).ToList()!;
+            Console.WriteLine(JsonSerializer.Serialize(likes));
+            
+            return ServiceResult<List<Like?>>.Success(likes!);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Like?>>.Failure(e, $"Failed to load likes for user {userId}.", "LikesService.LoadMultiple()");
+        }
     }
 
     public async Task<ServiceResult<Like>> Save(Like like)
