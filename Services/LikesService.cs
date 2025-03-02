@@ -48,8 +48,7 @@ public class LikesService
 
             var results = await Task.WhenAll(tasks);
             List<Like> likes = results.Where(result => result is not null).ToList()!;
-            Console.WriteLine(JsonSerializer.Serialize(likes));
-            
+                        
             return ServiceResult<List<Like?>>.Success(likes!);
         }
         catch (Exception e)
