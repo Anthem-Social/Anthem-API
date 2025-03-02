@@ -171,8 +171,9 @@ public class UsersController
                 Like = likesDict.TryGetValue(post.Id, out var like) ? like : null,
                 Post = post
             })
-            .ToList();        
-
+            .OrderByDescending(postCard => postCard.Post.Id)
+            .ToList();
+        
         // Create data to return
         var data = new
         {
