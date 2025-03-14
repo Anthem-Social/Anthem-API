@@ -103,6 +103,122 @@ public class UsersService
         }
     }
 
+    public async Task<ServiceResult<int>> IncrementTotalFollowers(string userId)
+    {
+        try
+        {
+            var request = new UpdateItemRequest
+            {
+                TableName = TABLE_NAME,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "Id", new AttributeValue { S = userId } },
+                },
+                UpdateExpression = "ADD TotalFollowers :one",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":one"] = new AttributeValue { N = "1" }
+                },
+                ReturnValues = ReturnValue.UPDATED_NEW
+            };
+            var response = await _client.UpdateItemAsync(request);
+            var totalFollowers = response.Attributes["TotalFollowers"].N;
+
+            return ServiceResult<int>.Success(int.Parse(totalFollowers));
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<int>.Failure(e, $"Failed for {userId}.", "UsersService.IncrementTotalFollowers()");
+        }
+    }
+
+    public async Task<ServiceResult<int>> DecrementTotalFollowers(string userId)
+    {
+        try
+        {
+            var request = new UpdateItemRequest
+            {
+                TableName = TABLE_NAME,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "Id", new AttributeValue { S = userId } },
+                },
+                UpdateExpression = "ADD TotalFollowers :negativeOne",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":negativeOne"] = new AttributeValue { N = "-1" }
+                },
+                ReturnValues = ReturnValue.UPDATED_NEW
+            };
+            var response = await _client.UpdateItemAsync(request);
+            var totalFollowers = response.Attributes["TotalFollowers"].N;
+
+            return ServiceResult<int>.Success(int.Parse(totalFollowers));
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<int>.Failure(e, $"Failed for {userId}.", "UsersService.DecrementTotalFollowers()");
+        }
+    }
+
+    public async Task<ServiceResult<int>> IncrementTotalFollowings(string userId)
+    {
+        try
+        {
+            var request = new UpdateItemRequest
+            {
+                TableName = TABLE_NAME,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "Id", new AttributeValue { S = userId } },
+                },
+                UpdateExpression = "ADD TotalFollowings :one",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":one"] = new AttributeValue { N = "1" }
+                },
+                ReturnValues = ReturnValue.UPDATED_NEW
+            };
+            var response = await _client.UpdateItemAsync(request);
+            var totalFollowings = response.Attributes["TotalFollowings"].N;
+
+            return ServiceResult<int>.Success(int.Parse(totalFollowings));
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<int>.Failure(e, $"Failed for {userId}.", "UsersService.IncrementTotalFollowings()");
+        }
+    }
+
+    public async Task<ServiceResult<int>> DecrementTotalFollowings(string userId)
+    {
+        try
+        {
+            var request = new UpdateItemRequest
+            {
+                TableName = TABLE_NAME,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "Id", new AttributeValue { S = userId } },
+                },
+                UpdateExpression = "ADD TotalFollowings :negativeOne",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":negativeOne"] = new AttributeValue { N = "-1" }
+                },
+                ReturnValues = ReturnValue.UPDATED_NEW
+            };
+            var response = await _client.UpdateItemAsync(request);
+            var totalFollowings = response.Attributes["TotalFollowings"].N;
+
+            return ServiceResult<int>.Success(int.Parse(totalFollowings));
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<int>.Failure(e, $"Failed for {userId}.", "UsersService.DecrementTotalFollowings()");
+        }
+    }
+
     public async Task<ServiceResult<User>> Update(string userId, UserUpdate userUpdate)
     {
         try
@@ -202,16 +318,6 @@ public class UsersService
             var user = new User
             {
                 Id = response.Attributes["Id"].S,
-                MusicProvider = (MusicProvider) int.Parse(response.Attributes["MusicProvider"].N),
-                Nickname = response.Attributes.ContainsKey("Nickname")
-                    ? response.Attributes["Nickname"].S
-                    : null,
-                PictureUrl = response.Attributes.ContainsKey("PictureUrl")
-                    ? response.Attributes["PictureUrl"].S
-                    : null,
-                Bio = response.Attributes.ContainsKey("Bio")
-                    ? response.Attributes["Bio"].S
-                    : null,
                 Anthem = response.Attributes.ContainsKey("Anthem")
                     ? new Track
                     {
@@ -235,7 +341,19 @@ public class UsersService
                         }
                     }
                     : null,
-                ChatIds = response.Attributes["ChatIds"].SS.Select(chatId => chatId).ToList().ToHashSet()
+                Bio = response.Attributes.ContainsKey("Bio")
+                    ? response.Attributes["Bio"].S
+                    : null,
+                ChatIds = response.Attributes["ChatIds"].SS.Select(chatId => chatId).ToList().ToHashSet(),
+                MusicProvider = (MusicProvider) int.Parse(response.Attributes["MusicProvider"].N),
+                Nickname = response.Attributes.ContainsKey("Nickname")
+                    ? response.Attributes["Nickname"].S
+                    : null,
+                PictureUrl = response.Attributes.ContainsKey("PictureUrl")
+                    ? response.Attributes["PictureUrl"].S
+                    : null,
+                TotalFollowers = int.Parse(response.Attributes["TotalFollowers"].N),
+                TotalFollowings = int.Parse(response.Attributes["TotalFollowings"].N)
             };
 
             return ServiceResult<User>.Success(user);

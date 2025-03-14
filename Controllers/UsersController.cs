@@ -240,6 +240,7 @@ public class UsersController
     [HttpPost("{userId}/follow/{followeeUserId}")]
     public async Task<IActionResult> Follow(string userId, string followeeUserId)
     {
+        // Create Follower
         var follower = new Follower
         {
             UserId = followeeUserId,
@@ -247,11 +248,23 @@ public class UsersController
             CreatedAt = DateTime.UtcNow
         };
 
-        var save = await _followersService.Save(follower);
+        var saveFollower = await _followersService.Save(follower);
 
-        if (save.IsFailure)
+        if (saveFollower.IsFailure)
             return StatusCode(500);
         
+        // Increment followee's TotalFollowers
+        var incrementFollowers = await _usersService.IncrementTotalFollowers(followeeUserId);
+
+        if (incrementFollowers.IsFailure)
+            return StatusCode(500);
+
+        // Increment follower's TotalFollowings
+        var incrementFollowings = await _usersService.IncrementTotalFollowings(userId);
+
+        if (incrementFollowings.IsFailure)
+            return StatusCode(500);
+
         return Created();
     }
 
@@ -259,11 +272,24 @@ public class UsersController
     [HttpDelete("{userId}/follow/{followeeUserId}")]
     public async Task<IActionResult> Unfollow(string userId, string followeeUserId)
     {
-        var delete = await _followersService.Delete(followeeUserId, userId);
+        // Delete Follower
+        var deleteFollower = await _followersService.Delete(followeeUserId, userId);
 
-        if (delete.IsFailure)
+        if (deleteFollower.IsFailure)
             return StatusCode(500);
         
+        // Decrement followee's TotalFollowers
+        var decrementFollowers = await _usersService.DecrementTotalFollowers(followeeUserId);
+
+        if (decrementFollowers.IsFailure)
+            return StatusCode(500);
+
+        // Decrement follower's TotalFollowings
+        var decrementFollowings = await _usersService.DecrementTotalFollowings(userId);
+
+        if (decrementFollowings.IsFailure)
+            return StatusCode(500);
+
         return NoContent();
     }
 
