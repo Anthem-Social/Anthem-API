@@ -2,16 +2,23 @@ using Amazon.DynamoDBv2;
 using AnthemAPI.Authentication;
 using AnthemAPI.Requirements;
 using AnthemAPI.Services;
+using LocalStack.Client.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Quartz;
 using static AnthemAPI.Common.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Use LocalStack for Development
+if (builder.Configuration["ASPNETCORE_ENVIRONMENT"] == "Development")
+{
+    builder.Services.AddLocalStack(builder.Configuration);
+}
+
 // Load secrets and configurations
 builder.Configuration.AddSystemsManager(c =>
 {
-    c.Path = $"/Anthem/{builder.Configuration["ASPNETCORE_ENVIRONMENT"]!}";
+    c.Path = $"/Anthem/";
     c.Optional = false;
     c.ReloadAfter = TimeSpan.FromMinutes(10);
 });
