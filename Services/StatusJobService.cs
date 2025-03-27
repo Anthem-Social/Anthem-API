@@ -46,7 +46,7 @@ public class StatusJobService
                 .WithSimpleSchedule(x => x
                     .WithIntervalInSeconds(Reduced.IntervalSeconds)
                     .RepeatForever())
-                .StartNow()
+                .StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
                 .Build();
             
             await scheduler.ScheduleJob(job, trigger);
