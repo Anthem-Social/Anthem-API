@@ -26,9 +26,7 @@ public class SpotifyService
             HttpResponseMessage response = await _client.GetAsync("me");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return ServiceResult<(string, MusicProvider)>.Failure(null, $"Error response: {response}", "SpotifyService.GetSubscriptionLevel()");
-            }
 
             string content = await response.Content.ReadAsStringAsync();
             JsonElement json = JsonDocument.Parse(content).RootElement;
