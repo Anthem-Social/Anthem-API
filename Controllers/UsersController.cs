@@ -184,6 +184,56 @@ public class UsersController
         return Ok(data);
     }
 
+    [HttpGet("{userId}/posts")]
+    public async Task<IActionResult> GetPosts(string userId, [FromQuery] string? exclusiveStartKey = null)
+    {
+        // Load the User
+        var loadUser = await _usersService.Load(userId);
+
+        if (loadUser.IsFailure)
+            return StatusCode(500);
+        
+        if (loadUser.Data is null)
+            return NotFound();
+        
+        User user = loadUser.Data;
+
+        // Create the Card
+        var card = new Card
+        {
+            UserId = user.Id,
+            Nickname = user.Nickname,
+            PictureUrl = user.PictureUrl
+        };
+
+        // Load a page of the Posts
+        var loadPosts = await _postsService.LoadPage(userId, exclusiveStartKey);
+
+        if (loadPosts.IsFailure)
+            return StatusCode(500);
+
+        List<Post> posts = loadPosts.Data.Item1;
+        string? lastEvaluatedKey = loadPosts.Data.Item2;
+        
+        // Create list of PostCard DTOs
+        List<PostCard> postCards = posts
+            .Select(post => new PostCard
+            {
+                Card = card,
+                Post = post
+            })
+            .ToList();
+        
+        // Create the data to return
+        var data = new
+        {
+            lastEvaluatedKey,
+            postCards
+        };
+
+        return Ok(data);
+    }
+
     [HttpGet("{userId}/followers")]
     public async Task<IActionResult> GetFollowers(string userId, [FromQuery] string? exclusiveStartKey = null)
     {
@@ -237,7 +287,7 @@ public class UsersController
     }
 
     [Authorize(Self)]
-    [HttpPost("{userId}/follow/{followeeUserId}")]
+    [HttpPost("{followeeUserId}/followers/{userId}")]
     public async Task<IActionResult> Follow(string userId, string followeeUserId)
     {
         // Create Follower
@@ -269,7 +319,7 @@ public class UsersController
     }
 
     [Authorize(Self)]
-    [HttpDelete("{userId}/follow/{followeeUserId}")]
+    [HttpDelete("{followeeUserId}/followers/{userId}")]
     public async Task<IActionResult> Unfollow(string userId, string followeeUserId)
     {
         // Delete Follower
@@ -345,8 +395,8 @@ public class UsersController
         return Ok(data);
     }
 
-    [HttpGet("{userId}/posts")]
-    public async Task<IActionResult> GetPosts(string userId, [FromQuery] string? exclusiveStartKey = null)
+    [HttpGet("{userId}/profile")]
+    public async Task<IActionResult> GetProfile(string userId)
     {
         // Load the User
         var loadUser = await _usersService.Load(userId);
@@ -356,40 +406,70 @@ public class UsersController
         
         if (loadUser.Data is null)
             return NotFound();
+
+        // Load the Relationship, User A is the one calling, User B is the one they are calling for
+        var loadRelationship = await _followersService.LoadRelationship(User.FindFirstValue("user_id")!, userId);
+
+        if (loadRelationship.IsFailure)
+            return StatusCode(500);
+                
+        // Load the Status
+        var loadStatus = await _statusesService.Load(userId);
+
+        if (loadStatus.IsFailure)
+            return StatusCode(500);
         
-        User user = loadUser.Data;
-
-        // Create the Card
-        var card = new Card
-        {
-            UserId = user.Id,
-            Nickname = user.Nickname,
-            PictureUrl = user.PictureUrl
-        };
-
-        // Load a page of the Posts
-        var loadPosts = await _postsService.LoadPage(userId, exclusiveStartKey);
+        // Load the Posts
+        var loadPosts = await _postsService.LoadPage(userId);
 
         if (loadPosts.IsFailure)
             return StatusCode(500);
 
         List<Post> posts = loadPosts.Data.Item1;
-        string? lastEvaluatedKey = loadPosts.Data.Item2;
+        List<string> postIds = posts.Select(post => post.Id).ToList();
+        HashSet<string> userIds = posts.Select(post => post.UserId).ToHashSet();
+
+        // Check if the User has liked any of these Posts
+        var loadLikes = await _likesService.Load(postIds, userId);
+
+        if (loadLikes.IsFailure)
+            return StatusCode(500);
         
-        // Create list of PostCard DTOs
+        List<Like?> likes = loadLikes.Data!;
+
+        // Create Like lookup by PostId
+        Dictionary<string, Like?> likesDict = likes.ToDictionary(like => like!.PostId);
+
+        // Get the Cards
+        var getCards = await _usersService.GetCards(userIds);
+
+        if (getCards.IsFailure)
+            return StatusCode(500);
+        
+        List<Card> cards = getCards.Data!;
+
+        // Create Card lookup by UserId
+        Dictionary<string, Card> cardsDict = cards.ToDictionary(card => card.UserId);
+
+        // Create list of PostCards
         List<PostCard> postCards = posts
             .Select(post => new PostCard
             {
-                Card = card,
+                Card = cardsDict[post.UserId],
+                Like = likesDict.TryGetValue(post.Id, out var like) ? like : null,
                 Post = post
             })
+            .OrderByDescending(postCard => postCard.Post.Id)
             .ToList();
-        
-        // Create the data to return
+
+        // Return the Data
         var data = new
         {
-            lastEvaluatedKey,
-            postCards
+            lastEvaluatedKey = loadPosts.Data.Item2,
+            postCards = postCards,
+            relationship = loadRelationship.Data,
+            status = loadStatus.Data,
+            user = loadUser.Data
         };
 
         return Ok(data);
