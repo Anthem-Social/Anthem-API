@@ -83,7 +83,7 @@ public class SpotifyService
             {
                 UserId = userId,
                 Track = track,
-                LastChanged = json.GetProperty("timestamp").GetInt64()
+                LastChanged = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
 
             return ServiceResult<Status?>.Success(status);
