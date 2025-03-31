@@ -466,7 +466,7 @@ public class UsersController
         var data = new
         {
             lastEvaluatedKey = loadPosts.Data.Item2,
-            postCards = postCards,
+            postCards,
             relationship = loadRelationship.Data,
             status = loadStatus.Data,
             user = loadUser.Data
@@ -475,17 +475,61 @@ public class UsersController
         return Ok(data);
     }
 
-    [HttpGet("{userId}/status")]
-    public async Task<IActionResult> GetStatus(string userId)
+    [Authorize(Self)]
+    [HttpGet("{userId}/statuses")]
+    public async Task<IActionResult> GetStatuses(string userId)
     {
-        var status = await _statusesService.Load(userId);
+        // Load Friends
+        var loadFriends = await _followersService.LoadFriends(userId);
 
-        if (status.IsFailure)
+        if (loadFriends.IsFailure)
             return StatusCode(500);
 
-        if (status.Data is null)
-            return NotFound();
+        HashSet<string> userIds = loadFriends.Data!.Select(f => f.FollowerUserId).ToHashSet();
 
-        return Ok(status.Data);
+        if (userIds.Count == 0)
+        {
+            return Ok(new
+            {
+                statusCards = new List<StatusCard>()
+            });
+        }
+        
+        // Get their Cards
+        var getCards = await _usersService.GetCards(userIds);
+
+        if (getCards.IsFailure)
+            return StatusCode(500);
+        
+        List<Card> cards = getCards.Data!;
+
+        // Create Card lookup by UserId
+        Dictionary<string, Card> cardsDict = cards.ToDictionary(card => card.UserId);
+
+        // Load their Statuses
+        var loadStatuses = await _statusesService.LoadAll(userIds.ToList());
+
+        if (loadStatuses.IsFailure || loadStatuses.Data is null)
+            return StatusCode(500);
+        
+        List<Status> statuses = loadStatuses.Data;
+
+        // Create list of StatusCards
+        List<StatusCard> statusCards = statuses
+            .Select(status => new StatusCard
+            {
+                UserId = status.UserId,
+                Card = cardsDict[status.UserId],
+                Status = status
+            })
+            .OrderByDescending(statusCards => statusCards.Status.LastChanged)
+            .ToList();
+        
+        var data = new
+        {
+            statusCards
+        };
+
+        return Ok(data);
     }
 }
