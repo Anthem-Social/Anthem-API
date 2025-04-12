@@ -66,30 +66,27 @@ public class StatusConnectionsService
     {
         try
         {
-            var batches = new List<Task<BatchExecuteStatementResponse>>();
+            var updates = new List<Task<UpdateItemResponse>>();
 
-            for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT)
-            {
-                List<string> ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_EXECUTE_STATEMENT_LIMIT).ToList();
-                var batch = new BatchExecuteStatementRequest
+            userIds.ForEach(userId => {
+                var request = new UpdateItemRequest
                 {
-                    Statements = ids.Select(userId => new BatchStatementRequest
+                    TableName = TABLE_NAME,
+                    Key = new Dictionary<string, AttributeValue>
                     {
-                        Statement = $"UPDATE {TABLE_NAME}" +
-                                    " SET ConnectionIds = SET_ADD(ConnectionIds, ?)" +
-                                    " WHERE UserId = ?",
-                        Parameters = new List<AttributeValue>
-                        {
-                            new AttributeValue { SS = [ connectionId ] },
-                            new AttributeValue { S = userId }
-                        }
-                    }).ToList()
+                        { "UserId", new AttributeValue { S = userId } }
+                    },
+                    UpdateExpression = "ADD ConnectionIds :connectionId",
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        [":connectionId"] = new AttributeValue { SS = [connectionId] }
+                    }
                 };
 
-                batches.Add(_client.BatchExecuteStatementAsync(batch));
-            }
+                updates.Add(_client.UpdateItemAsync(request));
+            });
 
-            await Task.WhenAll(batches);
+            await Task.WhenAll(updates);
 
             return ServiceResult<StatusConnection?>.Success(null);
         }
