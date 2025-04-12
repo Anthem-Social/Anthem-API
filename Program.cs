@@ -18,7 +18,7 @@ if (builder.Configuration["ASPNETCORE_ENVIRONMENT"] == "Development")
 // Load secrets and configurations
 builder.Configuration.AddSystemsManager(c =>
 {
-    c.Path = $"/Anthem/";
+    c.Path = "/Anthem/";
     c.Optional = false;
     c.ReloadAfter = TimeSpan.FromMinutes(10);
 });
