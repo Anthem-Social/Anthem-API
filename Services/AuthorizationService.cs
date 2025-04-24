@@ -17,6 +17,19 @@ public class AuthorizationsService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<Authorization?>> Delete(string userId)
+    {
+        try
+        {
+            await _context.DeleteAsync<Authorization>(userId);
+            return ServiceResult<Authorization?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Authorization?>.Failure(e, $"Failed to delete for {userId}.", "AuthorizationsService.Delete()");
+        }
+    }
+
     public async Task<ServiceResult<Authorization?>> Load(string userId)
     {
         try

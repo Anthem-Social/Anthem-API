@@ -19,6 +19,19 @@ public class UsersService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<User?>> Delete(string userId)
+    {
+        try
+        {
+            await _context.DeleteAsync<User>(userId);
+            return ServiceResult<User?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<User?>.Failure(e, $"Failed to delete user {userId}.", "UsersService.Delete()");
+        }
+    }
+
     public async Task<ServiceResult<User?>> Load(string userId)
     {
         try

@@ -116,9 +116,15 @@ public class PostsController
         string userId = User.FindFirstValue("user_id")!;
 
         // Delete the Post
-        var delete = await _postsService.Delete(postId);
+        var deletePost = await _postsService.Delete(postId);
 
-        if (delete.IsFailure)
+        if (deletePost.IsFailure)
+            return StatusCode(500);
+
+        // Delete all the Likes for the Post
+        var deleteLikes = await _likesService.DeleteAllByPostId(postId);
+
+        if (deleteLikes.IsFailure)
             return StatusCode(500);
 
         // Load the User's friends
@@ -133,7 +139,7 @@ public class PostsController
         List<string> userIds = loadFriends.Data!.Select(f => f.FollowerUserId).ToList();
 
         // Delete the Post from all their Feeds
-        var deleteAll = await _feedsService.DeleteAll(userIds, postId);
+        var deleteAll = await _feedsService.DeletePostFromAll(userIds, postId);
 
         if (deleteAll.IsFailure)
             return StatusCode(500);

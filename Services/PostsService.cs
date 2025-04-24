@@ -20,6 +20,37 @@ public class PostsService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<Post?>> DeleteAll(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Post>(userId);
+            var posts = await search.GetRemainingAsync();
+            var batch = _context.CreateBatchWrite<Post>();
+            batch.AddDeleteItems(posts);
+            await batch.ExecuteAsync();
+            return ServiceResult<Post?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Post?>.Failure(e, $"Failed to delete all for {userId}.", "PostsService.DeleteAll()");
+        }
+    }
+
+    public async Task<ServiceResult<Post?>> Delete(string postId)
+    {
+        try
+        {
+            string userId = postId.Split("#")[1];
+            await _context.DeleteAsync<Post>(userId, postId);
+            return ServiceResult<Post?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Post?>.Failure(e, $"Failed to delete {postId}.", "PostsService.Delete()");
+        }
+    }
+
     public async Task<ServiceResult<Post?>> Load(string postId)
     {
         try
@@ -34,7 +65,7 @@ public class PostsService
         }
     }
 
-    public async Task<ServiceResult<List<Post>>> Load(List<string> postIds)
+    public async Task<ServiceResult<List<Post>>> LoadFromList(List<string> postIds)
     {
         try
         {
@@ -64,7 +95,21 @@ public class PostsService
         }
         catch (Exception e)
         {
-            return ServiceResult<List<Post>>.Failure(e, "Failed to load all.", "PostsService.LoadAll()");
+            return ServiceResult<List<Post>>.Failure(e, "Failed to load all.", "PostsService.LoadFromList()");
+        }
+    }
+
+    public async Task<ServiceResult<List<Post>>> LoadAll(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Post>(userId);
+            List<Post> posts = await search.GetRemainingAsync();
+            return ServiceResult<List<Post>>.Success(posts);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Post>>.Failure(e, $"Failed to load all {userId}.", "PostsService.LoadAll()");
         }
     }
 
@@ -78,20 +123,6 @@ public class PostsService
         catch (Exception e)
         {
             return ServiceResult<Post>.Failure(e, $"Failed to save {post.Id}.", "PostsService.Save()");
-        }
-    }
-
-    public async Task<ServiceResult<Post?>> Delete(string postId)
-    {
-        try
-        {
-            string userId = postId.Split("#")[1];
-            await _context.DeleteAsync<Post>(userId, postId);
-            return ServiceResult<Post?>.Success(null);
-        }
-        catch (Exception e)
-        {
-            return ServiceResult<Post?>.Failure(e, $"Failed to delete {postId}.", "PostsService.Delete()");
         }
     }
 

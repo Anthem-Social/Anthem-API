@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
 using AnthemAPI.Models;
@@ -9,12 +10,31 @@ namespace AnthemAPI.Services;
 public class FeedsService
 {
     private readonly IAmazonDynamoDB _client;
+    private readonly DynamoDBContext _context;
     private const int PAGE_LIMIT = 30;
     private const string TABLE_NAME = "Feeds";
 
     public FeedsService(IAmazonDynamoDB client)
     {
         _client = client;
+        _context = new DynamoDBContext(client);
+    }
+
+    public async Task<ServiceResult<Feed?>> Delete(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Feed>(userId);
+            var feed = await search.GetRemainingAsync();
+            var batch = _context.CreateBatchWrite<Feed>();
+            batch.AddDeleteItems(feed);
+            await batch.ExecuteAsync();
+            return ServiceResult<Feed?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Feed?>.Failure(e, $"Failed to delete feed for {userId}.", "FeedsService.Delete()");
+        }
     }
 
     public async Task<ServiceResult<(List<Feed>, string?)>> LoadPage(string userId, string? exclusiveStartKey = null)
@@ -105,7 +125,7 @@ public class FeedsService
         }
     }
 
-    public async Task<ServiceResult<Feed?>> DeleteAll(List<string> userIds, string postId)
+    public async Task<ServiceResult<Feed?>> DeletePostFromAll(List<string> userIds, string postId)
     {
         try
         {

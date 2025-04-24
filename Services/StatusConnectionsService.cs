@@ -2,7 +2,6 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using AnthemAPI.Common;
-using static AnthemAPI.Common.Constants;
 
 namespace AnthemAPI.Services;
 
@@ -16,6 +15,19 @@ public class StatusConnectionsService
     {
         _client = client;
         _context = new DynamoDBContext(_client);
+    }
+
+    public async Task<ServiceResult<StatusConnection?>> Delete(string userId)
+    {
+        try
+        {
+            await _context.DeleteAsync<StatusConnection>(userId);
+            return ServiceResult<StatusConnection?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<StatusConnection?>.Failure(e, $"Failed to delete for {userId}.", "StatusConnectionsService.Delete()");
+        }
     }
 
     public async Task<ServiceResult<StatusConnection?>> Load(string userId)

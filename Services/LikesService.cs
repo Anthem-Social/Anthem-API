@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
@@ -19,6 +18,43 @@ public class LikesService
     {
         _client = client;
         _context = new DynamoDBContext(client);
+    }
+
+    public async Task<ServiceResult<Like?>> DeleteAllByPostId(string postId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Like>(postId);
+            var likes = await search.GetRemainingAsync();
+            var batch = _context.CreateBatchWrite<Like>();
+            batch.AddDeleteItems(likes);
+            await batch.ExecuteAsync();
+            return ServiceResult<Like?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Like?>.Failure(e, $"Failed to delete all likes by post id {postId}.", "LikesService.DeleteAllByPostId()");
+        }
+    }
+
+    public async Task<ServiceResult<Like?>> DeleteAllByUserId(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Like>(userId, new DynamoDBOperationConfig
+            {
+                IndexName = "UserId-index"
+            });
+            var likes = await search.GetRemainingAsync();
+            var batch = _context.CreateBatchWrite<Like>();
+            batch.AddDeleteItems(likes);
+            await batch.ExecuteAsync();
+            return ServiceResult<Like?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Like?>.Failure(e, $"Failed to delete all likes by user id {userId}.", "LikesService.DeleteAllByUserId()");
+        }
     }
 
     public async Task<ServiceResult<List<Like?>>> Load(List<string> postIds, string userId)

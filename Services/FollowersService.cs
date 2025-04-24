@@ -20,6 +20,56 @@ public class FollowersService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<Follower?>> Delete(string userId, string followerUserId)
+    {
+        try
+        {
+            await _context.DeleteAsync<Follower>(userId, followerUserId);
+            return ServiceResult<Follower?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Follower?>.Failure(e, $"Failed to delete for {userId} and {followerUserId}.", "FollowersService.Delete()");
+        }
+    }
+
+    public async Task<ServiceResult<Follower?>> DeleteAllFollowers(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Follower>(userId);
+            var followers = await search.GetRemainingAsync();
+            var batch = _context.CreateBatchWrite<Follower>();
+            batch.AddDeleteItems(followers);
+            await batch.ExecuteAsync();
+            return ServiceResult<Follower?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Follower?>.Failure(e, $"Failed to delete all followers for {userId}.", "FollowersService.DeleteAllFollowers()");
+        }
+    }
+
+    public async Task<ServiceResult<Follower?>> DeleteAllFollowings(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Follower>(userId, new DynamoDBOperationConfig
+            {
+                IndexName = "Follower-index"
+            });
+            var followings = await search.GetRemainingAsync();
+            var batch = _context.CreateBatchWrite<Follower>();
+            batch.AddDeleteItems(followings);
+            await batch.ExecuteAsync();
+            return ServiceResult<Follower?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Follower?>.Failure(e, $"Failed to delete all followings for {userId}.", "FollowersService.DeleteAllFollowings()");
+        }
+    }
+
     public async Task<ServiceResult<Follower?>> Load(string userId, string followerUserId)
     {
         try
@@ -33,6 +83,20 @@ public class FollowersService
         }
     }
 
+    public async Task<ServiceResult<List<Follower>>> LoadAllFollowers(string userId)
+    {
+        try
+        {
+            var search = _context.QueryAsync<Follower>(userId);
+            List<Follower> followers = await search.GetRemainingAsync();
+            return ServiceResult<List<Follower>>.Success(followers);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<Follower>>.Failure(e, $"Failed to load all followers for {userId}.", "FollowersService.LoadAllFollowers()");
+        }
+    }
+
     public async Task<ServiceResult<Follower>> Save(Follower follower)
     {
         try
@@ -43,19 +107,6 @@ public class FollowersService
         catch (Exception e)
         {
             return ServiceResult<Follower>.Failure(e, $"Failed to save for {follower.UserId} and {follower.FollowerUserId}.", "FollowersService.Save()");
-        }
-    }
-
-    public async Task<ServiceResult<Follower?>> Delete(string userId, string followerUserId)
-    {
-        try
-        {
-            await _context.DeleteAsync<Follower>(userId, followerUserId);
-            return ServiceResult<Follower?>.Success(null);
-        }
-        catch (Exception e)
-        {
-            return ServiceResult<Follower?>.Failure(e, $"Failed to delete for {userId} and {followerUserId}.", "FollowersService.Delete()");
         }
     }
 

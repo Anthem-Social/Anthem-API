@@ -12,23 +12,27 @@ namespace AnthemAPI.Controllers;
 [Route("users")]
 public class UsersController
 (
+    AuthorizationsService authorizationsService,
     ChatsService chatsService,
     FeedsService feedsService,
     FollowersService followersService,
     LikesService likesService,
     PostsService postsService,
+    StatusConnectionsService statusConnectionsService,
     StatusesService statusesService,
     UsersService usersService
 ) : ControllerBase
 {
+    private readonly AuthorizationsService _authorizationsService = authorizationsService;
     private readonly ChatsService _chatsService = chatsService;
     private readonly FeedsService _feedsService = feedsService;
     private readonly FollowersService _followersService = followersService;
     private readonly LikesService _likesService = likesService;
     private readonly PostsService _postsService = postsService;
+    private readonly StatusConnectionsService _statusConnectionsService = statusConnectionsService;
     private readonly StatusesService _statusesService = statusesService;
     private readonly UsersService _usersService = usersService;
-    
+
     [HttpGet("{userId}")]
     public async Task<IActionResult> Get(string userId)
     {
@@ -73,6 +77,64 @@ public class UsersController
         return Ok(update.Data);
     }
 
+    [Authorize(Self)]
+    [HttpDelete("{userId}/account")]
+    public async Task<IActionResult> Delete(string userId)
+    {
+        // Delete Authorization
+        await _authorizationsService.Delete(userId);
+
+        // Delete Feed
+        await _feedsService.Delete(userId);
+
+        // Decrement TotalFollowings for each Follower
+        var loadFollowers = await _followersService.LoadAllFollowers(userId);
+        List<string> followerIds = loadFollowers.Data!.Select(f => f.FollowerUserId).ToList();
+        foreach (string followerId in followerIds)
+        {
+            await _usersService.DecrementTotalFollowings(followerId);
+        }
+
+        // Delete Followers
+        await _followersService.DeleteAllFollowers(userId);
+
+        // Decrement TotalFollowers for each Following
+        var loadFollowings = await _followersService.LoadAllFollowings(userId);
+        List<string> followingsIds = loadFollowings.Data!.Select(f => f.UserId).ToList();
+        foreach (string followingsId in followingsIds)
+        {
+            await _usersService.DecrementTotalFollowers(followingsId);
+        }
+
+        // Delete Followings
+        await _followersService.DeleteAllFollowings(userId);
+
+        // Delete all of the Likes they have given
+        await _likesService.DeleteAllByUserId(userId);
+
+        // Delete all of the Likes on their Posts
+        var loadPosts = await _postsService.LoadAll(userId);
+        List<string> postIds = loadPosts.Data!.Select(p => p.Id).ToList();
+        foreach (string postId in postIds)
+        {
+            await _likesService.DeleteAllByPostId(postId);
+        }
+
+        // Delete Posts
+        await _postsService.DeleteAll(userId);
+
+        // Delete Status
+        await _statusesService.Delete(userId);
+
+        // Delete StatusConnections
+        await _statusConnectionsService.Delete(userId);
+
+        // Delete User
+        await _usersService.Delete(userId);
+
+        return NoContent();
+    }
+    
     [Authorize(Self)]
     [HttpGet("{userId}/chats")]
     public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
@@ -133,7 +195,7 @@ public class UsersController
         List<string> postIds = feeds.Select(feed => feed.PostId).ToList();
         
         // Load the Posts
-        var loadPosts = await _postsService.Load(postIds);
+        var loadPosts = await _postsService.LoadFromList(postIds);
 
         if (loadPosts.IsFailure)
             return StatusCode(500);

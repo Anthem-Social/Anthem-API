@@ -15,6 +15,19 @@ public class StatusesService
         _context = new DynamoDBContext(client);
     }
 
+    public async Task<ServiceResult<Status?>> Delete(string userId)
+    {
+        try
+        {
+            await _context.DeleteAsync<Status>(userId);
+            return ServiceResult<Status?>.Success(null);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<Status?>.Failure(e, $"Failed to delete status for {userId}.", "StatusesService.Delete()");
+        }
+    }
+
     public async Task<ServiceResult<Status?>> Load(string userId)
     {
         try
