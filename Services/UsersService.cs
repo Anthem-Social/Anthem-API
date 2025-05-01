@@ -250,16 +250,6 @@ public class UsersService
                 removeExpressions.Add("Nickname");
             }
 
-            if (userUpdate.PictureUrl is not null)
-            {
-                setExpressions.Add("PictureUrl = :pictureUrl");
-                values.Add(":pictureUrl", new AttributeValue { S = userUpdate.PictureUrl });
-            }
-            else
-            {
-                removeExpressions.Add("PictureUrl");
-            }
-
             if (userUpdate.Bio is not null)
             {
                 setExpressions.Add("Bio = :bio");
@@ -295,7 +285,19 @@ public class UsersService
                             M = new Dictionary<string, AttributeValue>
                             {
                                 ["Uri"] = new AttributeValue { S = userUpdate.Anthem.Album.Uri },
-                                ["ImageUrl"] = new AttributeValue { S = userUpdate.Anthem.Album.ImageUrl }
+                                ["ImageUrl"] = new AttributeValue { S = userUpdate.Anthem.Album.ImageUrl },
+                                ["Name"] = new AttributeValue { S = userUpdate.Anthem.Album.Name },
+                                ["Artists"] = new AttributeValue
+                                {
+                                    L = userUpdate.Anthem.Album.Artists.Select(artist => new AttributeValue
+                                    {
+                                        M = new Dictionary<string, AttributeValue>
+                                        {
+                                            ["Uri"] = new AttributeValue { S = artist.Uri },
+                                            ["Name"] = new AttributeValue { S = artist.Name }
+                                        }
+                                    }).ToList()
+                                }
                             }
                         }
                     }
