@@ -163,18 +163,15 @@ public class UsersController
         return Ok(data);
     }
 
-    [Authorize(Self)]
-    [HttpGet("{userId}/claims")]
-    public IActionResult GetClaims(string userId)
+    [HttpGet("claims")]
+    public IActionResult GetClaims()
     {
-
         var claims = new Claims
         {
-            AccessToken = User.FindFirstValue("access_token")!,
             Country = User.FindFirstValue("country")!,
             ExplicitContent = bool.Parse(User.FindFirstValue("explicit_content")!),
             Premium = bool.Parse(User.FindFirstValue("premium")!),
-            UserId = userId
+            UserId = User.FindFirstValue("user_id")!
         };
 
         return Ok(claims);
