@@ -148,16 +148,16 @@ public class ChatsController
         }
         
         // Add the ChatId to the User's chats list
-        User user = loadUser.Data;
-        bool addedChat = user.ChatIds.Add(chatId);
+        // User user = loadUser.Data;
+        // bool addedChat = user.ChatIds.Add(chatId);
         
-        if (addedChat) // Save the User
-        {
-            var saveUser = await _usersService.Save(user);
+        // if (addedChat) // Save the User
+        // {
+        //     var saveUser = await _usersService.Save(user);
 
-            if (saveUser.IsFailure)
-                return StatusCode(500);
-        }
+        //     if (saveUser.IsFailure)
+        //         return StatusCode(500);
+        // }
 
         return Ok(chat);
     }
@@ -198,16 +198,16 @@ public class ChatsController
         }
         
         // Remove the ChatId from the User's chats list
-        User user = loadUser.Data;
-        bool removedChat = user.ChatIds.Remove(chatId);
+        // User user = loadUser.Data;
+        // bool removedChat = user.ChatIds.Remove(chatId);
         
-        if (removedChat) // Save the User
-        {
-            var saveUser = await _usersService.Save(user);
+        // if (removedChat) // Save the User
+        // {
+        //     var saveUser = await _usersService.Save(user);
 
-            if (saveUser.IsFailure)
-                return StatusCode(500);
-        }
+        //     if (saveUser.IsFailure)
+        //         return StatusCode(500);
+        // }
 
         return NoContent();
     }

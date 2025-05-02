@@ -139,28 +139,31 @@ public class UsersController
     [HttpGet("{userId}/chats")]
     public async Task<IActionResult> GetChats(string userId, [FromQuery] int page = 1)
     {
-        var loadUser = await _usersService.Load(userId);
+        // var loadUser = await _usersService.Load(userId);
 
-        if (loadUser.IsFailure)
-            return StatusCode(500);
+        // if (loadUser.IsFailure)
+        //     return StatusCode(500);
 
-        if (loadUser.Data is null)
-            return NotFound();
+        // if (loadUser.Data is null)
+        //     return NotFound();
         
-        List<string> chatIds = loadUser.Data.ChatIds.ToList();
+        // List<string> chatIds = loadUser.Data.ChatIds.ToList();
 
-        var getChats = await _chatsService.LoadPage(chatIds, page);
+        // var getChats = await _chatsService.LoadPage(chatIds, page);
 
-        if (getChats.IsFailure)
-            return StatusCode(500);
+        // if (getChats.IsFailure)
+        //     return StatusCode(500);
         
-        var data = new 
-        {
-            chats = getChats.Data,
-            page = page + 1
-        };
+        // var data = new 
+        // {
+        //     chats = getChats.Data,
+        //     page = page + 1
+        // };
 
-        return Ok(data);
+        // return Ok(data);
+
+        await Task.Delay(0);
+        return StatusCode(501);
     }
 
     [HttpGet("claims")]
