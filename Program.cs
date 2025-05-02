@@ -126,7 +126,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"Pre Auth: [{context.Request.Method}] {context.Request.Path}");
+    await next.Invoke();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"Post Auth: [{context.Request.Method}] {context.Request.Path}");
+    await next.Invoke();
+});
 app.Run();

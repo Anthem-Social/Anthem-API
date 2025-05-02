@@ -359,7 +359,6 @@ public class UsersService
                 Bio = response.Attributes.ContainsKey("Bio")
                     ? response.Attributes["Bio"].S
                     : null,
-                ChatIds = response.Attributes["ChatIds"].SS.Select(chatId => chatId).ToList().ToHashSet(),
                 MusicProvider = (MusicProvider) int.Parse(response.Attributes["MusicProvider"].N),
                 Nickname = response.Attributes.ContainsKey("Nickname")
                     ? response.Attributes["Nickname"].S
