@@ -148,7 +148,6 @@ public class SpotifyController
     [HttpPost("token/swap")]
     public async Task<IActionResult> Swap([FromForm] string code)
     {
-        Console.WriteLine("In Swap with code: " + code);
         // Swap for an access token
         var swap = await _tokenService.Swap(code);
 
@@ -157,8 +156,6 @@ public class SpotifyController
 
         JsonElement json = JsonDocument.Parse(swap.Data!).RootElement;
         string accessToken = json.GetProperty("access_token").GetString()!;
-
-        Console.WriteLine("In Swap, got access token: " + accessToken);
 
         // Get the user's subscription level
         var get = await _spotifyService.GetSubscriptionLevel(accessToken);
@@ -169,24 +166,18 @@ public class SpotifyController
         string userId = get.Data.Item1;
         MusicProvider musicProvider = get.Data.Item2;
 
-        Console.WriteLine("In Swap, got userId: " + userId + " and musicProvider: " + musicProvider);
-
         // Update the user's music provider
         var update = await _usersService.UpdateMusicProvider(userId, musicProvider);
 
         if (update.IsFailure)
             return StatusCode(500);
-
-        Console.WriteLine("In Swap, updated music provider successfully");
         
         // Save the user's tokens for Status job
         var save = await _authorizationsService.Save(userId, json);
 
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);
-        
-        Console.WriteLine("In Swap, saved auth successfully");
-
+          
         return Ok(swap.Data);
     }
 }
