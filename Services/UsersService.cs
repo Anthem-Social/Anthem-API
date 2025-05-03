@@ -382,7 +382,7 @@ public class UsersService
         }
     }
 
-    public async Task<ServiceResult<User?>> UpdateMusicProvider(string userId, MusicProvider musicProvider)
+    public async Task<ServiceResult<User?>> UpdateAccountInformation(Account account)
     {
         try
         {
@@ -391,12 +391,13 @@ public class UsersService
                 TableName = TABLE_NAME,
                 Key = new Dictionary<string, AttributeValue>
                 {
-                    { "Id", new AttributeValue { S = userId } }
+                    { "Id", new AttributeValue { S = account.Id } }
                 },
-                UpdateExpression = "SET MusicProvider = :musicProvider",
+                UpdateExpression = "SET MusicProvider = :musicProvider, PictureUrl = :pictureUrl",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    [":musicProvider"] = new AttributeValue { N = ((int) musicProvider).ToString() }
+                    [":musicProvider"] = new AttributeValue { N = ((int) account.MusicProvider).ToString() },
+                    [":pictureUrl"] = new AttributeValue { S = account.PictureUrl ?? "" }
                 },
                 ReturnValues = ReturnValue.ALL_NEW
             };
@@ -407,7 +408,7 @@ public class UsersService
         }
         catch (Exception e)
         {
-            return ServiceResult<User?>.Failure(e, $"Failed to update music provider for {userId}.", "UsersService.UpdateMusicProvider()");
+            return ServiceResult<User?>.Failure(e, $"Failed to update account information for {account.Id}.", "UsersService.UpdateAccountInformation()");
         }
     }
 

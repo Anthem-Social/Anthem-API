@@ -127,14 +127,14 @@ public class SpotifyController
         JsonElement json = JsonDocument.Parse(complete).RootElement;
         string accessToken = json.GetProperty("access_token").GetString()!;
 
-        // Get the user's subscription level
-        var get = await _spotifyService.GetSubscriptionLevel(accessToken);
+        // Get the user's account information
+        var get = await _spotifyService.GetAccount(accessToken);
 
-        if (get is null || get.IsFailure)
+        if (get.Data is null || get.IsFailure)
             return StatusCode(500);
-        
-        string userId = get.Data.Item1;
-        
+
+        string userId = get.Data.Id;
+                
         // Save the new access token
         var save = await _authorizationsService.Save(userId, json);
 
@@ -157,23 +157,22 @@ public class SpotifyController
         JsonElement json = JsonDocument.Parse(swap.Data!).RootElement;
         string accessToken = json.GetProperty("access_token").GetString()!;
 
-        // Get the user's subscription level
-        var get = await _spotifyService.GetSubscriptionLevel(accessToken);
+        // Get the user's account information
+        var get = await _spotifyService.GetAccount(accessToken);
 
-        if (get is null || get.IsFailure)
+        if (get.Data is null || get.IsFailure)
             return StatusCode(500);
-        
-        string userId = get.Data.Item1;
-        MusicProvider musicProvider = get.Data.Item2;
 
-        // Update the user's music provider
-        var update = await _usersService.UpdateMusicProvider(userId, musicProvider);
+        Account account = get.Data;
+
+        // Update the user's account information
+        var update = await _usersService.UpdateAccountInformation(account);
 
         if (update.IsFailure)
             return StatusCode(500);
         
         // Save the user's tokens for Status job
-        var save = await _authorizationsService.Save(userId, json);
+        var save = await _authorizationsService.Save(account.Id, json);
 
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);

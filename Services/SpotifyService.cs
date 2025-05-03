@@ -17,7 +17,7 @@ public class SpotifyService
         _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
     }
 
-    public async Task<ServiceResult<(string, MusicProvider)>> GetSubscriptionLevel(string accessToken)
+    public async Task<ServiceResult<Account>> GetAccount(string accessToken)
     {
         try
         {
@@ -26,7 +26,7 @@ public class SpotifyService
             HttpResponseMessage response = await _client.GetAsync("me");
 
             if (!response.IsSuccessStatusCode)
-                return ServiceResult<(string, MusicProvider)>.Failure(null, $"Error response: {response}", "SpotifyService.GetSubscriptionLevel()");
+                return ServiceResult<Account>.Failure(null, $"Error response: {response}", "SpotifyService.GetSubscriptionLevel()");
 
             string content = await response.Content.ReadAsStringAsync();
             JsonElement json = JsonDocument.Parse(content).RootElement;
@@ -35,12 +35,32 @@ public class SpotifyService
             MusicProvider musicProvider = product == "premium"
                 ? MusicProvider.SpotifyPremium
                 : MusicProvider.SpotifyFree;
+            
+            string? pictureUrl = null;
+            if (json.TryGetProperty("images", out JsonElement images))
+            {
+                foreach (JsonElement image in images.EnumerateArray())
+                {
+                    if (image.GetProperty("height").GetInt32() == 300 && image.GetProperty("width").GetInt32() == 300)
+                    {
+                        pictureUrl = image.GetProperty("url").GetString();
+                        break;
+                    }
+                }
+            }
 
-            return ServiceResult<(string, MusicProvider)>.Success((userId, musicProvider));
+            var account = new Account
+            {
+                Id = userId,
+                MusicProvider = musicProvider,
+                PictureUrl = pictureUrl
+            };
+
+            return ServiceResult<Account>.Success(account);
         }
         catch (Exception e)
         {
-            return ServiceResult<(string, MusicProvider)>.Failure(e, "Failed to get subscription level.", "SpotifyService.GetSubscriptionLevel()");
+            return ServiceResult<Account>.Failure(e, "Failed to get account.", "SpotifyService.GetAccount()");
         }
     }
 
