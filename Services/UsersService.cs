@@ -366,8 +366,12 @@ public class UsersService
                 PictureUrl = response.Attributes.ContainsKey("PictureUrl")
                     ? response.Attributes["PictureUrl"].S
                     : null,
-                TotalFollowers = int.Parse(response.Attributes["TotalFollowers"].N),
-                TotalFollowings = int.Parse(response.Attributes["TotalFollowings"].N)
+                TotalFollowers = response.Attributes.ContainsKey("TotalFollowers")
+                    ? int.Parse(response.Attributes["TotalFollowers"].N)
+                    : 0,
+                TotalFollowings = response.Attributes.ContainsKey("TotalFollowings")
+                    ? int.Parse(response.Attributes["TotalFollowings"].N)
+                    : 0
             };
 
             return ServiceResult<User>.Success(user);
