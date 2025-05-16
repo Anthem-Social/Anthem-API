@@ -299,7 +299,8 @@ public class UsersService
                                     }).ToList()
                                 }
                             }
-                        }
+                        },
+                        ["PreviewUrl"] = new AttributeValue { S = userUpdate.Anthem.PreviewUrl ?? "" }
                     }
                 });
             }
@@ -353,7 +354,10 @@ public class UsersService
                             Name = response.Attributes["Anthem"].M["Album"].M["Name"].S,
                             ImageUrl = response.Attributes["Anthem"].M["Album"].M["ImageUrl"].S,
                             Uri = response.Attributes["Anthem"].M["Album"].M["Uri"].S,
-                        }
+                        },
+                        PreviewUrl = response.Attributes["Anthem"].M.ContainsKey("PreviewUrl")
+                            ? response.Attributes["Anthem"].M["PreviewUrl"].S
+                            : null
                     }
                     : null,
                 Bio = response.Attributes.ContainsKey("Bio")
