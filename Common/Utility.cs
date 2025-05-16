@@ -150,11 +150,12 @@ public static class Utility
 
     public static Track GetTrack(JsonElement json)
     {
+        // Get Album
         JsonElement albumJson = json.GetProperty("album"); 
-        JsonElement artistsJson = json.GetProperty("artists");
-
         Album album = GetAlbum(albumJson);
-                
+
+        // Get Artists
+        JsonElement artistsJson = json.GetProperty("artists");
         List<Artist> artists = artistsJson
             .EnumerateArray()
             .Select(GetArtist)
@@ -162,10 +163,10 @@ public static class Utility
 
         var track = new Track
         {
-            Uri = json.GetProperty("uri").GetString()!,
-            Name = json.GetProperty("name").GetString()!,
             Artists = artists,
-            Album = album
+            Album = album,
+            Name = json.GetProperty("name").GetString()!,
+            Uri = json.GetProperty("uri").GetString()!
         };
 
         return track;

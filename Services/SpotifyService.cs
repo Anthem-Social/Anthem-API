@@ -4,17 +4,21 @@ using AnthemAPI.Common;
 using AnthemAPI.Models;
 using static AnthemAPI.Common.Utility;
 using static AnthemAPI.Common.Constants;
+using HtmlAgilityPack;
 
 namespace AnthemAPI.Services;
 
 public class SpotifyService
 {
     private readonly HttpClient _client;
+    private readonly HttpClient _previewUrlClient;
 
     public SpotifyService(IHttpClientFactory factory)
     {
         _client = factory.CreateClient();
         _client.BaseAddress = new Uri("https://api.spotify.com/v1/");
+        _previewUrlClient = factory.CreateClient();
+        _previewUrlClient.BaseAddress = new Uri("https://open.spotify.com/track/");
     }
 
     public async Task<ServiceResult<Account>> GetAccount(string accessToken)
@@ -64,6 +68,30 @@ public class SpotifyService
         }
     }
 
+    public async Task<string?> GetPreviewUrl(string trackUri)
+    {
+        try
+        {
+            HttpResponseMessage response = await _previewUrlClient.GetAsync(trackUri.Split(":").Last());
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            string htmlContent = await response.Content.ReadAsStringAsync();
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(htmlContent);
+
+            var metaTag = htmlDoc.DocumentNode.SelectSingleNode("//meta[@property='og:audio']");
+
+            return metaTag?.GetAttributeValue("content", string.Empty);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<ServiceResult<Status?>> GetStatus(string accessToken, string userId)
     {
         try
@@ -73,16 +101,12 @@ public class SpotifyService
             HttpResponseMessage response = await _client.GetAsync("me/player");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return ServiceResult<Status?>.Failure(null, $"Error response: {response}", "SpotifyService.GetStatus()");
-            }
 
             string content = await response.Content.ReadAsStringAsync();
 
             if (string.IsNullOrEmpty(content))
-            {
                 return ServiceResult<Status?>.Success(null);
-            }
 
             JsonElement json = JsonDocument.Parse(content).RootElement;
 
@@ -90,13 +114,14 @@ public class SpotifyService
             string type = json.GetProperty("currently_playing_type").GetString()!;
 
             if (type != "track")
-            {
                 return ServiceResult<Status?>.Success(null);
-            }
 
             JsonElement item = json.GetProperty("item");
 
             Track track = GetTrack(item);
+
+            // Add Preview URL
+            track.PreviewUrl = await GetPreviewUrl(track.Uri);
 
             // Create Status
             var status = new Status
@@ -272,12 +297,19 @@ public class SpotifyService
 
             string content = await response.Content.ReadAsStringAsync(); 
             JsonElement json = JsonDocument.Parse(content).RootElement;
-            List<Track> tracks = json
-                .GetProperty("tracks")
-                .GetProperty("items")
-                .EnumerateArray()
-                .Select(GetTrack)
-                .ToList();
+            List<Track> tracks = (await Task.WhenAll(
+                json
+                    .GetProperty("tracks")
+                    .GetProperty("items")
+                    .EnumerateArray()
+                    .Select(GetTrack)
+                    .Select(async track =>
+                    {
+                        // Add Preview URL
+                        track.PreviewUrl = await GetPreviewUrl(track.Uri);
+                        return track;
+                    })
+            )).ToList();
 
             return ServiceResult<List<Track>>.Success(tracks);
         }
