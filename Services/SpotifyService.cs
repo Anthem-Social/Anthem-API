@@ -68,6 +68,76 @@ public class SpotifyService
         }
     }
 
+    public async Task<ServiceResult<string?>> GetAnthemQueuePlaylistId(string accessToken, string userId)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            string content;
+            JsonElement json;
+            int limit = 50;
+            int offset = 0;
+            List<(string, string)> playlists;
+            HttpResponseMessage response;
+
+            // Try to find the 'Anthem Queue' playlist
+            do
+            {
+                response = await _client.GetAsync($"me/playlists?limit={limit}&offset={offset}");
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult<string?>.Failure(null, $"Error response: {response}", "SpotifyService.GetFeedPlaylistUri()");
+
+                content = await response.Content.ReadAsStringAsync();
+                json = JsonDocument.Parse(content).RootElement;
+
+                playlists = json.GetProperty("items")
+                    .EnumerateArray()
+                    .Select(item => (
+                        item.GetProperty("id").GetString() ?? "",
+                        item.GetProperty("name").GetString() ?? ""
+                    ))
+                    .ToList();
+
+                foreach (var (id, name) in playlists)
+                {
+                    if (name == "Anthem Queue")
+                        return ServiceResult<string?>.Success(id);
+                }
+
+                offset += limit;
+            }
+            while (playlists.Count == limit);
+
+            // Create the 'Anthem Queue' playlist
+            var data = new Dictionary<string, string>
+            {
+                { "description", "These were the tracks from you most recent feed or profile visit on Anthem." },
+                { "name", "Anthem Queue" },
+                { "public", "false" }
+            };
+            response = await _client.PostAsync($"users/{userId}/playlists", JsonContent.Create(data));
+            content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<string?>.Failure(null, $"Error response pt.2: {response}", "SpotifyService.GetFeedPlaylistUri()");
+
+            json = JsonDocument.Parse(content).RootElement;
+
+            string? playlistId = json.GetProperty("id").GetString();
+
+            if (playlistId == null)
+                return ServiceResult<string?>.Failure(null, "Playlist Id was null.", "SpotifyService.GetFeedPlaylistUri()");
+            
+            return ServiceResult<string?>.Success(playlistId);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<string?>.Failure(e, "Failed to get feed playlist Id.", "SpotifyService.GetFeedPlaylistId()");
+        }
+    }
+
     public async Task<string?> GetPreviewUrl(string trackUri)
     {
         try
@@ -224,6 +294,29 @@ public class SpotifyService
             return ServiceResult<bool>.Failure(e, "Failed to unsave track.", "SpotifyService.UnsaveTrack()");
         }
     }
+    
+    public async Task<ServiceResult<bool>> UpdateAnthemQueuePlaylist(string accessToken, string playlistId, List<string> trackUris)
+    {
+        try
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var data = new Dictionary<string, object>
+            {
+                { "uris", trackUris },
+            };
+            HttpResponseMessage response = await _client.PutAsync($"playlists/{playlistId}/tracks", JsonContent.Create(data));
+
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult<bool>.Failure(null, $"Error response: {response}", "SpotifyService.UpdateFeedPlaylist()");
+
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<bool>.Failure(e, "Failed to update feed playlist.", "SpotifyService.UpdateFeedPlaylist()");
+        }
+    }
 
     public async Task<ServiceResult<List<Album>>> SearchAlbums(string accessToken, string query)
     {
@@ -237,7 +330,7 @@ public class SpotifyService
             if (!response.IsSuccessStatusCode)
                 return ServiceResult<List<Album>>.Failure(null, $"Error response: {response}", "SpotifyService.SearchAlbums()");
 
-            string content = await response.Content.ReadAsStringAsync(); 
+            string content = await response.Content.ReadAsStringAsync();
             JsonElement json = JsonDocument.Parse(content).RootElement;
             List<Album> albums = json
                 .GetProperty("albums")

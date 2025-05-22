@@ -20,6 +20,27 @@ public class SpotifyController
     private readonly TokenService _tokenService = tokenService;
     private readonly UsersService _usersService = usersService;
 
+    [HttpPut("anthem-queue-playlist")]
+    public async Task<IActionResult> UpdateAnthemQueuePlaylist([FromBody] List<string> trackUris)
+    {
+        string accessToken = User.FindFirstValue("access_token")!;
+        string userId = User.FindFirstValue("user_id")!;
+
+        var get = await _spotifyService.GetAnthemQueuePlaylistId(accessToken, userId);
+
+        if (get.IsFailure || get.Data is null)
+            return StatusCode(500);
+
+        string playlistId = get.Data;
+
+        var update = await _spotifyService.UpdateAnthemQueuePlaylist(accessToken, playlistId, trackUris);
+
+        if (update.IsFailure)
+            return StatusCode(500);
+
+        return Ok(playlistId);
+    }
+
     [HttpPut("save/album/{id}")]
     public async Task<IActionResult> SaveAlbum(string id)
     {
