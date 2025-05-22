@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using AnthemAPI.Common;
+using AnthemAPI.Models;
 using AnthemAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +11,14 @@ using Microsoft.AspNetCore.Mvc;
 public class SpotifyController
 (
     AuthorizationsService authorizationsService,
+    FollowersService followersService,
     SpotifyService spotifyService,
     TokenService tokenService,
     UsersService usersService
 ) : ControllerBase
 {
     private readonly AuthorizationsService _authorizationsService = authorizationsService;
+    private readonly FollowersService _followersService = followersService;
     private readonly SpotifyService _spotifyService = spotifyService;
     private readonly TokenService _tokenService = tokenService;
     private readonly UsersService _usersService = usersService;
@@ -197,7 +200,68 @@ public class SpotifyController
 
         if (save.Data is null || save.IsFailure)
             return StatusCode(500);
-          
+
+        // Ensure this user has a mutual following with all other users
+        // Load followers
+        var loadFollowers = await _followersService.LoadAllFollowers(account.Id);
+
+        if (loadFollowers.IsFailure)
+            return StatusCode(500);
+        
+        List<string> followerUserIds = loadFollowers.Data!.Select(f => f.FollowerUserId).ToList();
+        
+        // Load followings
+        var loadFollowings = await _followersService.LoadAllFollowings(account.Id);
+
+        if (loadFollowings.IsFailure)
+            return StatusCode(500);
+        
+        List<string> followingUserIds = loadFollowings.Data!.Select(f => f.UserId).ToList();
+
+        // Get all user ids
+        var getAllUserIds = await _usersService.GetAllUserIds();
+
+        if (getAllUserIds.IsFailure)
+            return StatusCode(500);
+
+        List<string> allUserIds = getAllUserIds.Data!;
+
+        // Get missing followers and followings
+        List<string> missingFollowers = allUserIds.Except(followerUserIds).ToList();
+        List<string> missingFollowings = allUserIds.Except(followingUserIds).ToList();
+
+        // Add missing followers
+        foreach (string missingFollower in missingFollowers)
+        {
+            var follower = new Follower
+            {
+                UserId = account.Id,
+                FollowerUserId = missingFollower,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            var saveFollower = await _followersService.Save(follower);
+
+            if (saveFollower.IsFailure)
+                return StatusCode(500);
+        }
+
+        // Add missing followings
+        foreach (string missingFollowing in missingFollowings)
+        {
+            var following = new Follower
+            {
+                UserId = missingFollowing,
+                FollowerUserId = account.Id,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            var saveFollowing = await _followersService.Save(following);
+
+            if (saveFollowing.IsFailure)
+                return StatusCode(500);
+        }
+
         return Ok(swap.Data);
     }
 }
