@@ -424,7 +424,7 @@ public class UsersService
 
             for (int i = 0; i < userIds.Count; i += DYNAMO_DB_BATCH_GET_LIMIT)
             {
-                List<string> ids  = userIds.Skip(i).Take(DYNAMO_DB_BATCH_GET_LIMIT).ToList();
+                List<string> ids = userIds.Skip(i).Take(DYNAMO_DB_BATCH_GET_LIMIT).ToList();
                 var batch = _context.CreateBatchGet<User>();
                 ids.ForEach(batch.AddKey);
                 batches.Add(batch);
@@ -448,6 +448,25 @@ public class UsersService
         catch (Exception e)
         {
             return ServiceResult<List<Card>>.Failure(e, "Failed to get cards.", "UsersService.GetCards");
+        }
+    }
+    
+    public async Task<ServiceResult<List<string>>> GetAllUserIds()
+    {
+        try
+        {
+            List<User>? users = await _context.ScanAsync<User>(new List<ScanCondition>()).GetRemainingAsync();
+
+            if (users == null || users.Count == 0)
+                return ServiceResult<List<string>>.Failure(null, "No users found.", "UsersService.GetAllUserIds()");
+            
+            List<string> userIds = users.Select(user => user.Id).ToList();
+
+            return ServiceResult<List<string>>.Success(userIds);
+        }
+        catch (Exception e)
+        {
+            return ServiceResult<List<string>>.Failure(e, "Failed to get all user Ids.", "UsersService.GetAllUserIds()");
         }
     }
 }
