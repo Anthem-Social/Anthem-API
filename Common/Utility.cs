@@ -100,7 +100,7 @@ public static class Utility
                     ConnectionId = connectionId,
                     Data = new MemoryStream(bytes)
                 });
-                Console.WriteLine($"Sending to {connectionId}.");
+                // Console.WriteLine($"Sending to {connectionId}.");
             }
             catch (GoneException)
             {
