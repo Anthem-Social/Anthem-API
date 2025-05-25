@@ -228,7 +228,7 @@ public class SpotifyController
 
         // Get missing followers and followings
         List<string> missingFollowers = allUserIds.Except(followerUserIds).ToList();
-        List<string> missingFollowings = allUserIds.Except(followingUserIds).ToList();
+        List<string> missingFollowings = allUserIds.Except(followingUserIds).Where(id => id != account.Id).ToList();
 
         // Add missing followers
         foreach (string missingFollower in missingFollowers)
@@ -244,6 +244,9 @@ public class SpotifyController
 
             if (saveFollower.IsFailure)
                 return StatusCode(500);
+
+            await _usersService.IncrementTotalFollowers(account.Id);
+            await _usersService.IncrementTotalFollowings(missingFollower);
         }
 
         // Add missing followings
@@ -260,6 +263,9 @@ public class SpotifyController
 
             if (saveFollowing.IsFailure)
                 return StatusCode(500);
+
+            await _usersService.IncrementTotalFollowers(missingFollowing);
+            await _usersService.IncrementTotalFollowings(account.Id);
         }
 
         return Ok(swap.Data);
