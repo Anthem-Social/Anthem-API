@@ -50,8 +50,6 @@ public class StatusJobService
                 .Build();
             
             await scheduler.ScheduleJob(job, trigger);
-
-            Console.WriteLine("Scheduled " + userId);
             
             return ServiceResult<bool>.Success(true);
         }
@@ -67,8 +65,6 @@ public class StatusJobService
         {
             IScheduler scheduler = await _schedulerFactory.GetScheduler();
             await scheduler.UnscheduleJob(new TriggerKey(userId, pollingGroup));
-
-            Console.WriteLine("Unscheduled " + userId + " " + pollingGroup);
 
             return ServiceResult<bool>.Success(true);
         }
@@ -106,7 +102,7 @@ public class StatusJobService
             
             await scheduler.RescheduleJob(new TriggerKey(userId, previousGroup), trigger);
 
-            Console.WriteLine("Set tier for " + userId + " to " + tier.Group);
+            Console.WriteLine($"Set job {userId} to {tier.Group}.");
 
             return ServiceResult<bool>.Success(true);
         }
@@ -191,18 +187,14 @@ public class EmitStatus : IJob
             if (status is null)
             {
                 if (pollingGroup == Active.Group)
-                {
                     await _statusJobService.SetPollingTier(userId, Reduced);
-                }
 
                 return;
             }
 
             // If we have a status, ensure we set the PollingTier to Active
             if (pollingGroup == Reduced.Group)
-            {
                 await _statusJobService.SetPollingTier(userId, Active);
-            }
 
             // Save the user's status
             var saveStatus = await _statusesService.Save(status);
@@ -236,14 +228,12 @@ public class EmitStatus : IJob
 
                 // Unschedule the job if there are no more connections
                 if (count == 0)
-                {
                     await _statusJobService.Unschedule(userId, pollingGroup);
-                }
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Emit status job failed.\n{e.StackTrace}");
+            Console.WriteLine($"Job {userId} failed: {e.StackTrace}");
             await _statusJobService.Unschedule(userId, pollingGroup);
             await _statusConnectionsService.Clear(userId);
         }

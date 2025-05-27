@@ -24,9 +24,7 @@ public class ConnectionController
     [HttpPost("chat")]
     public async void CreateChatConnection([FromBody] ChatConnectionCreate dto)
     {
-        Console.WriteLine("Connected.");
-        Console.WriteLine("ConnectionId: " + dto.ConnectionId);
-        Console.WriteLine("ChatId: " + dto.ChatId);
+        Console.WriteLine($"Connected to chat {dto.ChatId}.");
         await _chatConnectionsService.AddConnection(dto.ChatId, dto.ConnectionId);
     }
     
@@ -34,9 +32,7 @@ public class ConnectionController
     [HttpPost("status")]
     public async void CreateStatusConnection([FromBody] StatusConnectionCreate dto)
     {
-        Console.WriteLine("Connected.");
-        Console.WriteLine("ConnectionId: " + dto.ConnectionId);
-        Console.WriteLine("UserId: " + dto.UserId);
+        Console.WriteLine($"{dto.UserId} connected to status updates.");
 
         // Load the user
         var loadUser = await _usersService.Load(dto.UserId);            
