@@ -341,7 +341,7 @@ public class UsersController
         // Create data to return
         var data = new
         {
-            followers = followerCards,
+            results = followerCards,
             lastEvaluatedKey
         };
         
@@ -450,7 +450,7 @@ public class UsersController
         // Create data to return
         var data = new
         {
-            followings = followerCards,
+            results = followerCards,
             lastEvaluatedKey
         };
         

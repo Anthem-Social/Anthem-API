@@ -298,7 +298,7 @@ public class PostsController
         var data = new
         {
             lastEvaluatedKey,
-            likes = likeCards
+            results = likeCards
         };
 
         return Ok(data);
