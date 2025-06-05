@@ -211,7 +211,7 @@ public class EmitStatus : IJob
             HashSet<string> connectionIds = connections.Data.ConnectionIds;
 
             if (connectionIds.Count == 0)
-                throw new Exception("ConnectionIds list is empty.");
+                return;
 
             // Send the user's Spotify status to all connections
             List<string> gone = await Utility.SendToConnections(_configuration["StatusApiGatewayUrl"]!, connectionIds, status);
@@ -223,12 +223,6 @@ public class EmitStatus : IJob
 
                 if (remove.IsFailure)
                     throw new Exception(remove.ErrorMessage);
-                
-                int count = remove.Data;
-
-                // Unschedule the job if there are no more connections
-                if (count == 0)
-                    await _statusJobService.Unschedule(userId, pollingGroup);
             }
         }
         catch (Exception e)
