@@ -208,9 +208,10 @@ public class EmitStatus : IJob
             if (connections.Data is null || connections.IsFailure)
                 throw new Exception(connections.ErrorMessage);
 
-            HashSet<string> connectionIds = connections.Data.ConnectionIds;
+            HashSet<string>? connectionIds = connections.Data.ConnectionIds;
 
-            if (connectionIds.Count == 0)
+            // If no active connections, just return and don't unschedule the job
+            if (connectionIds is null || connectionIds.Count == 0)
                 return;
 
             // Send the user's Spotify status to all connections
